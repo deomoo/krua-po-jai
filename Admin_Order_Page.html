@@ -11,10 +11,11 @@
   --orange:#ea580c;--gray:#64748b;--bg:#f1f5f9;--card:#fff;
   --text:#1e293b;--text2:#64748b;--border:#e2e8f0;
 }
-body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:72px;}
+html{overflow-x:hidden;}
+body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:72px;overflow-x:hidden;width:100%;}
 
 /* ── Login Screen ── */
-#login-screen{position:fixed;inset:0;background:linear-gradient(160deg,var(--blue),var(--blue2));z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+#login-screen{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:linear-gradient(160deg,var(--blue),var(--blue2));z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
 .login-logo{font-size:48px;margin-bottom:8px;}
 .login-title{color:#fff;font-size:20px;font-weight:700;margin-bottom:4px;}
 .login-sub{color:rgba(255,255,255,.7);font-size:13px;margin-bottom:32px;}
@@ -29,7 +30,7 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 .pin-error{color:#fca5a5;font-size:13px;margin-top:12px;min-height:20px;text-align:center;}
 
 /* ── Cooking Fullscreen ── */
-#cook-screen{position:fixed;inset:0;background:#1e293b;z-index:8888;display:none;flex-direction:column;}
+#cook-screen{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:#1e293b;z-index:8888;display:none;flex-direction:column;}
 .cook-header{background:#ea580c;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;}
 .cook-header-left{color:#fff;}
 .cook-order-num{font-size:22px;font-weight:800;}
@@ -82,7 +83,7 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 .quick-btn:active{opacity:.75;}
 
 /* ── Edit Order Sheet ── */
-.edit-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;animation:fadeIn .2s;}
+.edit-overlay{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;animation:fadeIn .2s;}
 .edit-overlay.open{display:block;}
 .edit-order-sheet{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:201;display:flex;flex-direction:column;max-height:90vh;transform:translateY(100%);transition:transform .3s ease;}
 .edit-order-sheet.open{transform:translateY(0);}
@@ -128,8 +129,9 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 .picker-item-price{font-size:15px;font-weight:800;color:var(--blue);}
 
 /* ── Bottom Nav ── */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;z-index:60;height:60px;}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:transparent;font-family:inherit;font-size:11px;color:var(--text2);cursor:pointer;padding:6px 0;}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;z-index:60;height:58px;}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:transparent;font-family:inherit;font-size:10px;color:var(--text2);cursor:pointer;padding:4px 2px;min-width:0;}
+.nav-btn .nav-icon{font-size:18px;line-height:1;}
 .nav-btn.active{color:var(--blue);}
 .nav-btn .nav-icon{font-size:20px;line-height:1;}
 .nav-badge{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center;position:absolute;top:6px;right:calc(50% - 18px);}
@@ -178,7 +180,7 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 .order-address{font-size:12px;color:var(--text2);margin-bottom:6px;}
 .order-total{font-size:15px;font-weight:700;color:var(--blue);}
 .card-actions{padding:10px 14px 14px;display:flex;gap:8px;flex-wrap:wrap;}
-.action-btn{flex:1;min-width:100px;padding:10px 8px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+.action-btn{flex:1;min-width:80px;max-width:100%;padding:10px 6px;border:none;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
 .action-btn:active{opacity:.7;transform:scale(.97);}
 .btn-confirm{background:#dbeafe;color:#1d4ed8;}
 .btn-cooking{background:#fef3c7;color:#b45309;}
@@ -216,7 +218,7 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 .fab:active{transform:scale(.93);}
 
 /* ── Modal ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:flex-end;}
+.modal-overlay{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:flex-end;}
 .modal-overlay.open{display:flex;}
 .modal{background:#fff;width:100%;border-radius:20px 20px 0 0;padding:24px 20px 36px;max-height:90vh;overflow-y:auto;}
 .modal-title{font-size:17px;font-weight:700;margin-bottom:20px;}
@@ -233,7 +235,7 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 /* ── Empty / Loading ── */
 .empty{text-align:center;padding:60px 20px;color:var(--text2);}
 .empty-icon{font-size:48px;margin-bottom:12px;}
-#loading{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:12px;}
+#loading{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:12px;}
 #loading .spin{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e293b;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;z-index:999;transition:transform .3s;white-space:nowrap;}
@@ -423,6 +425,16 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
   <div id="menu-picker-list" class="picker-list"></div>
 </div>
 
+<div class="page" id="page-ingredient">
+  <div style="padding:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h2 style="font-size:16px;font-weight:600;margin:0;">🧅 วัตถุดิบ</h2>
+      <button onclick="loadIngredients()" style="background:none;border:1px solid #ddd;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;">🔄 รีเฟรช</button>
+    </div>
+    <div id="ingredient-list" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+  </div>
+</div>
+
 <div class="page" id="page-report">
   <div class="report-section">
     <div class="quick-btns">
@@ -497,6 +509,10 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
   <button class="nav-btn" id="nav-report" onclick="showPage('report')">
     <span class="nav-icon">📊</span>
     <span>รายงาน</span>
+  </button>
+  <button class="nav-btn" id="nav-ingredient" onclick="showPage('ingredient')">
+    <span class="nav-icon">🧅</span>
+    <span>วัตถุดิบ</span>
   </button>
 </nav>
 
@@ -628,6 +644,7 @@ function showPage(page) {
   document.getElementById('fab-add').style.display = page === 'menu' ? 'flex' : 'none';
   if (page === 'menu' && allMenus.length === 0) loadMenus();
   if (page === 'report') initReport();
+  if (page === 'ingredient') loadIngredients();
 }
 
 function refreshCurrent() {
@@ -1245,6 +1262,69 @@ function toLocalDateStr(d) {
   if (!d) return '';
   const bkk = new Date(d.getTime ? d.getTime() + 7*3600000 : new Date(d).getTime() + 7*3600000);
   return bkk.toISOString().slice(0,10);
+}
+
+// ════════════════════════════════════════
+//  INGREDIENT MANAGEMENT
+// ════════════════════════════════════════
+
+let allIngredients = [];
+
+async function loadIngredients() {
+  document.getElementById('ingredient-list').innerHTML =
+    '<div style="grid-column:1/-1;text-align:center;color:#888;padding:20px;">กำลังโหลด...</div>';
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + '?action=ingredients');
+    const data = await res.json();
+    allIngredients = data.items || [];
+    renderIngredients();
+  } catch(e) {
+    document.getElementById('ingredient-list').innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;color:#e53e3e;padding:20px;">โหลดข้อมูลไม่สำเร็จ</div>';
+  }
+}
+
+function renderIngredients() {
+  const el = document.getElementById('ingredient-list');
+  if (!allIngredients.length) {
+    el.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#888;padding:20px;">ไม่พบข้อมูลวัตถุดิบ</div>';
+    return;
+  }
+  el.innerHTML = allIngredients.map(ing => {
+    const isOut = ing.status === 'หมด';
+    return `
+    <div style="background:white;border-radius:12px;border:2px solid ${isOut ? '#fc8181' : '#9ae6b4'};padding:14px;text-align:center;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px;color:#2d3748;">${ing.name}</div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px;">${ing.unit || ''}</div>
+      <div style="display:flex;gap:6px;justify-content:center;">
+        <button onclick="setIngredient('${ing.id}','มี')"
+          style="flex:1;padding:7px 4px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:600;
+                 background:${!isOut ? '#38a169' : '#e2e8f0'};color:${!isOut ? 'white' : '#888'};">
+          ✅ มี
+        </button>
+        <button onclick="setIngredient('${ing.id}','หมด')"
+          style="flex:1;padding:7px 4px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:600;
+                 background:${isOut ? '#e53e3e' : '#e2e8f0'};color:${isOut ? 'white' : '#888'};">
+          ❌ หมด
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function setIngredient(id, newStatus) {
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST', headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({ action: 'toggleIngredient', id, status: newStatus }),
+      redirect: 'follow'
+    });
+    const data = JSON.parse(await res.text());
+    if (data.status === 'success') {
+      const ing = allIngredients.find(i => i.id === id);
+      if (ing) { ing.status = newStatus; renderIngredients(); }
+    }
+  } catch(e) { alert('เกิดข้อผิดพลาด'); }
 }
 
 function initReport() {
