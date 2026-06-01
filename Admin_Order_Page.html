@@ -81,6 +81,15 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 .report-bar-fill{height:100%;border-radius:6px;background:var(--blue);transition:.3s;}
 .report-bar-val{font-size:12px;font-weight:700;color:var(--text2);width:50px;text-align:right;}
 .report-empty{text-align:center;color:var(--text2);padding:32px 0;font-size:14px;}
+.rpt-day-group{margin-bottom:16px;}
+.rpt-day-header{font-weight:700;font-size:14px;color:var(--blue);padding:6px 0;border-bottom:2px solid var(--border);margin-bottom:6px;display:flex;justify-content:space-between;}
+.rpt-order-row{display:flex;gap:8px;padding:6px 4px;border-bottom:1px solid var(--border);font-size:13px;align-items:flex-start;}
+.rpt-order-num{font-weight:700;color:var(--text);min-width:48px;}
+.rpt-order-items{flex:1;color:var(--text);line-height:1.5;}
+.rpt-order-total{font-weight:700;color:var(--green);white-space:nowrap;}
+.rpt-menu-day-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.rpt-menu-day-name{color:var(--text);}
+.rpt-menu-day-qty{font-weight:700;color:var(--blue);}
 .quick-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
 .quick-btn{background:#e0e7ff;color:var(--blue);border:none;border-radius:8px;padding:6px 12px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;}
 .quick-btn:active{opacity:.75;}
@@ -504,6 +513,18 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
       <div class="report-card-title">💳 วิธีชำระเงิน</div>
       <div id="rpt-payment-body"><div class="report-empty">ยังไม่มีข้อมูล</div></div>
     </div>
+
+    <!-- สรุปเมนูรายวัน -->
+    <div class="report-card">
+      <div class="report-card-title">🍽 สรุปเมนูที่ขายแต่ละวัน</div>
+      <div id="rpt-menu-daily-body"><div class="report-empty">ยังไม่มีข้อมูล</div></div>
+    </div>
+
+    <!-- รายละเอียดแต่ละออเดอร์ -->
+    <div class="report-card">
+      <div class="report-card-title">📋 รายละเอียดออเดอร์</div>
+      <div id="rpt-order-detail-body"><div class="report-empty">ยังไม่มีข้อมูล</div></div>
+    </div>
   </div>
 </div>
 
@@ -634,6 +655,21 @@ let allMenus    = [];
 let lastLatestOrderNum = ''; // 👈 ตัวแปรเช็คออเดอร์ล่าสุดเพื่อเล่นเสียง
 let activeOrderFilter = 'all';
 let activeMenuCat     = 'all';
+const doneTimestamps  = {};
+
+setInterval(() => {
+  const now = Date.now();
+  allOrders.forEach(o => {
+    if (o.status === 'เสร็จแล้ว' && doneTimestamps[o.orderNum]) {
+      const mins = (now - doneTimestamps[o.orderNum]) / 60000;
+      if (mins >= 20 && !doneTimestamps[o.orderNum + '_alerted']) {
+        doneTimestamps[o.orderNum + '_alerted'] = true;
+        speakAlert('ออเดอร์ ' + o.orderNum.replace('#','').split('').join(' ') + ' เสร็จแล้ว กรุณากดส่งหรือรับแล้ว');
+        showToast('⚠️ ' + o.orderNum + ' เสร็จมา 20 นาทีแล้ว ยังไม่ได้กดส่ง/รับ!', 6000);
+      }
+    }
+  });
+}, 60000);
 let menuSearchQ       = '';
 let currentPage       = 'orders';
 
@@ -733,10 +769,19 @@ async function loadOrders() {
   finally { document.getElementById('loading').style.display = 'none'; }
 }
 
+function getTodayStr() { return toLocalDateStr(new Date()); }
+
 function renderOrders() {
   const c = document.getElementById('orders-container');
-  const list = activeOrderFilter === 'all' ? allOrders : allOrders.filter(o => o.status === activeOrderFilter);
-  if (!list.length) { c.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div>${activeOrderFilter==='all'?'ยังไม่มีออเดอร์':'ไม่มีออเดอร์สถานะนี้'}</div></div>`; return; }
+  const today = getTodayStr();
+  let list;
+  if (activeOrderFilter === 'all') {
+    list = allOrders.filter(o => {
+      const d = o.date ? toLocalDateStr(parseOrderDate(o.date)) : '';
+      return d === today && o.status !== 'เสร็จแล้ว' && o.status !== 'ส่งแล้ว' && o.status !== 'ยกเลิก';
+    });
+  } else { list = allOrders.filter(o => o.status === activeOrderFilter); }
+  if (!list.length) { c.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div>${activeOrderFilter==='all'?'ไม่มีออเดอร์คงค้างวันนี้':'ไม่มีออเดอร์สถานะนี้'}</div></div>`; return; }
   c.innerHTML = list.map(orderCard).join('');
 }
 
@@ -850,6 +895,8 @@ async function updateStatus(orderNum, newStatus) {
     if (data.status !== 'success') throw new Error(data.message);
     const idx = allOrders.findIndex(o => o.orderNum === orderNum);
     if (idx !== -1) allOrders[idx].status = newStatus;
+    if (newStatus === 'เสร็จแล้ว') doneTimestamps[orderNum] = Date.now();
+    if (newStatus === 'ส่งแล้ว') { delete doneTimestamps[orderNum]; delete doneTimestamps[orderNum+'_alerted']; }
     renderOrders(); updateSummary();
     showToast('✅ ' + newStatus + ' แล้ว');
   } catch(err) { showToast('❌ ' + err.message); }
@@ -863,11 +910,13 @@ function filterOrders(f, btn) {
 }
 
 function updateSummary() {
-  const pending = allOrders.filter(o => o.status === 'รอทำ').length;
+  const today = getTodayStr();
+  const todayOrders = allOrders.filter(o => o.date && toLocalDateStr(parseOrderDate(o.date)) === today);
+  const pending = todayOrders.filter(o => o.status === 'รอทำ').length;
   document.getElementById('cnt-new').textContent   = pending;
-  document.getElementById('cnt-doing').textContent = allOrders.filter(o => o.status==='กำลังทำ'||o.status==='รับออเดอร์').length;
-  document.getElementById('cnt-done').textContent  = allOrders.filter(o => o.status==='เสร็จแล้ว'||o.status==='ส่งแล้ว').length;
-  document.getElementById('cnt-all').textContent   = allOrders.length;
+  document.getElementById('cnt-doing').textContent = todayOrders.filter(o => o.status==='กำลังทำ'||o.status==='รับออเดอร์').length;
+  document.getElementById('cnt-done').textContent  = todayOrders.filter(o => o.status==='เสร็จแล้ว'||o.status==='ส่งแล้ว').length;
+  document.getElementById('cnt-all').textContent   = todayOrders.filter(o => o.status !== 'ยกเลิก').length;
   const badge = document.getElementById('badge-orders');
   badge.textContent = pending;
   badge.style.display = pending > 0 ? 'block' : 'none';
@@ -1475,19 +1524,17 @@ function renderReport() {
     </table>`;
   }
 
+  // ── helper: parse items ──
+  function parseItems(s) {
+    return String(s||'').split(',').map(x=>x.trim()).filter(Boolean).map(line=>{
+      const m=line.replace(/^[•\s]+/,'').match(/^(.+?)\s+x(\d+)/);
+      return m ? {name:m[1].trim(),qty:parseInt(m[2])||1} : {name:line.replace(/^[•\s]+/,''),qty:1};
+    });
+  }
+
   // ── เมนูขายดี ──
   const menuCount = {};
-  filtered.forEach(o => {
-    const items = String(o.items||'').split('\n');
-    items.forEach(line => {
-      const m = line.match(/^x?(\d+)\s+(.+?)(\s+฿\d+)?$/);
-      if (m) {
-        const name = m[2].trim();
-        const qty  = parseInt(m[1])||1;
-        menuCount[name] = (menuCount[name]||0) + qty;
-      }
-    });
-  });
+  filtered.forEach(o => { parseItems(o.items).forEach(({name,qty}) => { menuCount[name]=(menuCount[name]||0)+qty; }); });
   const topMenus = Object.entries(menuCount).sort((a,b) => b[1]-a[1]).slice(0,10);
   const maxMenu  = topMenus[0]?.[1] || 1;
   const menuEl   = document.getElementById('rpt-menu-body');
@@ -1537,6 +1584,14 @@ function renderReport() {
         <div class="report-bar-bg"><div class="report-bar-fill" style="width:${Math.round(cnt/maxPay*100)}%;background:var(--green)"></div></div>
         <div class="report-bar-val">${cnt}</div>
       </div>`).join('');
+
+  // ── สรุปเมนูรายวัน ──
+  const menuDailyEl = document.getElementById('rpt-menu-daily-body');
+  if(!menuDailyEl){} else if(dayKeys.length===0){menuDailyEl.innerHTML='<div class="report-empty">ไม่มีข้อมูล</div>';}else{menuDailyEl.innerHTML=dayKeys.map(d=>{const dayO=filtered.filter(o=>toLocalDateStr(parseOrderDate(o.date))===d);const dm={};dayO.forEach(o=>parseItems(o.items).forEach(({name,qty})=>{dm[name]=(dm[name]||0)+qty;}));const dd=new Date(d+'T00:00:00+07:00');const ds=dd.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});return'<div class="rpt-day-group"><div class="rpt-day-header"><span>'+ds+'</span><span style="color:var(--text2);font-weight:400">'+dayO.length+' ออเดอร์</span></div>'+Object.entries(dm).sort((a,b)=>b[1]-a[1]).map(([n,q])=>'<div class="rpt-menu-day-row"><span class="rpt-menu-day-name">'+n+'</span><span class="rpt-menu-day-qty">'+q+' จาน</span></div>').join('')+'</div>';}).join('');}
+
+  // ── รายละเอียดออเดอร์ ──
+  const orderDetailEl = document.getElementById('rpt-order-detail-body');
+  if(!orderDetailEl){} else if(filtered.length===0){orderDetailEl.innerHTML='<div class="report-empty">ไม่มีข้อมูล</div>';}else{orderDetailEl.innerHTML=dayKeys.map(d=>{const dayO=[...filtered].filter(o=>toLocalDateStr(parseOrderDate(o.date))===d).sort((a,b)=>(b.time||'').localeCompare(a.time||''));const dd=new Date(d+'T00:00:00+07:00');const ds=dd.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});const dt=dayO.reduce((s,o)=>s+(parseFloat(o.total)||0),0);return'<div class="rpt-day-group"><div class="rpt-day-header"><span>'+ds+'</span><span style="color:var(--green);font-weight:700">฿'+dt.toLocaleString()+'</span></div>'+dayO.map(o=>'<div class="rpt-order-row"><span class="rpt-order-num">'+o.orderNum+'</span><span class="rpt-order-items">'+parseItems(o.items).map(({name,qty})=>name+'×'+qty).join(', ')+'</span><span class="rpt-order-total">฿'+Number(o.total).toLocaleString()+'</span></div>').join('')+'</div>';}).join('');}
 }
 </script>
 </body>
