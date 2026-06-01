@@ -528,6 +528,48 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
   </div>
 </div>
 
+<!-- หน้ารายจ่าย -->
+<div class="page" id="page-expense">
+  <div style="padding:12px 16px 0;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h2 style="font-size:16px;font-weight:700;margin:0;">💸 รายจ่าย</h2>
+      <button onclick="openAddExpense()" style="background:var(--blue);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">+ เพิ่ม</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div class="kpi-card"><div class="kpi-label">💰 รายจ่ายวันนี้</div><div class="kpi-val" id="exp-today" style="color:var(--red)">฿0</div></div>
+      <div class="kpi-card"><div class="kpi-label">📅 เดือนนี้</div><div class="kpi-val" id="exp-month" style="color:var(--red)">฿0</div></div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+      <button class="quick-btn" onclick="loadExpenses('today')">วันนี้</button>
+      <button class="quick-btn" onclick="loadExpenses('week')">7 วัน</button>
+      <button class="quick-btn" onclick="loadExpenses('month')">เดือนนี้</button>
+    </div>
+    <div id="expense-list"><div class="report-empty">กำลังโหลด...</div></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="expense-modal" onclick="closeExpenseModal(event)">
+  <div class="modal">
+    <div class="modal-title">💸 เพิ่มรายจ่าย</div>
+    <div class="form-group"><label class="form-label">หมวดหมู่</label>
+      <select class="form-select" id="exp-cat">
+        <option>วัตถุดิบ</option><option>แก๊ส/เชื้อเพลิง</option>
+        <option>บรรจุภัณฑ์</option><option>ค่าจ้าง</option>
+        <option>ค่าเช่า</option><option>อื่นๆ</option>
+      </select></div>
+    <div class="form-group"><label class="form-label">รายการ *</label>
+      <input class="form-input" id="exp-name" type="text" placeholder="เช่น หมูกรอบ, น้ำมัน"></div>
+    <div class="form-group"><label class="form-label">จำนวนเงิน (฿) *</label>
+      <input class="form-input" id="exp-amount" type="number" min="0" placeholder="200"></div>
+    <div class="form-group"><label class="form-label">หมายเหตุ</label>
+      <input class="form-input" id="exp-note" type="text" placeholder="(ไม่บังคับ)"></div>
+    <div class="modal-btns">
+      <button class="modal-btn btn-close" onclick="closeExpenseModal()">ยกเลิก</button>
+      <button class="modal-btn btn-save" onclick="saveExpense()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
 <nav class="bottom-nav">
   <button class="nav-btn active" id="nav-orders" onclick="showPage('orders')">
     <span class="nav-icon">📋</span>
@@ -545,6 +587,10 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
   <button class="nav-btn" id="nav-ingredient" onclick="showPage('ingredient')">
     <span class="nav-icon">🧅</span>
     <span>วัตถุดิบ</span>
+  </button>
+  <button class="nav-btn" id="nav-expense" onclick="showPage('expense')">
+    <span class="nav-icon">💸</span>
+    <span>รายจ่าย</span>
   </button>
 </nav>
 
@@ -725,6 +771,7 @@ function showPage(page) {
   if (page === 'menu' && allMenus.length === 0) loadMenus();
   if (page === 'report') initReport();
   if (page === 'ingredient') loadIngredients();
+  if (page === 'expense') loadExpenses('today');
 }
 
 function refreshCurrent() {
@@ -1593,6 +1640,96 @@ function renderReport() {
   const orderDetailEl = document.getElementById('rpt-order-detail-body');
   if(!orderDetailEl){} else if(filtered.length===0){orderDetailEl.innerHTML='<div class="report-empty">ไม่มีข้อมูล</div>';}else{orderDetailEl.innerHTML=dayKeys.map(d=>{const dayO=[...filtered].filter(o=>toLocalDateStr(parseOrderDate(o.date))===d).sort((a,b)=>(b.time||'').localeCompare(a.time||''));const dd=new Date(d+'T00:00:00+07:00');const ds=dd.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});const dt=dayO.reduce((s,o)=>s+(parseFloat(o.total)||0),0);return'<div class="rpt-day-group"><div class="rpt-day-header"><span>'+ds+'</span><span style="color:var(--green);font-weight:700">฿'+dt.toLocaleString()+'</span></div>'+dayO.map(o=>'<div class="rpt-order-row"><span class="rpt-order-num">'+o.orderNum+'</span><span class="rpt-order-items">'+parseItems(o.items).map(({name,qty})=>name+'×'+qty).join(', ')+'</span><span class="rpt-order-total">฿'+Number(o.total).toLocaleString()+'</span></div>').join('')+'</div>';}).join('');}
 }
+// ════════════════════════════════════════
+//  EXPENSE MANAGEMENT
+// ════════════════════════════════════════
+let allExpenses = [];
+
+async function loadExpenses(range) {
+  document.getElementById('expense-list').innerHTML = '<div class="report-empty">กำลังโหลด...</div>';
+  try {
+    const now = new Date();
+    let from, to = toLocalDateStr(now);
+    if (range === 'today') { from = toLocalDateStr(now); }
+    else if (range === 'week') { const w=new Date(now); w.setDate(w.getDate()-6); from=toLocalDateStr(w); }
+    else if (range === 'month') { from=toLocalDateStr(new Date(now.getFullYear(),now.getMonth(),1)); }
+    const url = APPS_SCRIPT_URL + '?action=expenses&from=' + from + '&to=' + to;
+    const res  = await fetch(url);
+    const data = await res.json();
+    allExpenses = data.expenses || [];
+    renderExpenses();
+    // KPI today
+    const todayStr = toLocalDateStr(now);
+    const todayAmt = allExpenses.filter(e=>e.date===todayStr.replace(/-/g,'/').split('/').reverse().join('/')||parseExpDate(e.date)===todayStr).reduce((s,e)=>s+(e.amount||0),0);
+    document.getElementById('exp-today').textContent = '฿'+allExpenses.filter(e=>parseExpDate(e.date)===todayStr).reduce((s,e)=>s+(e.amount||0),0).toLocaleString();
+    // month
+    const mStr = now.getFullYear()+'-'+(now.getMonth()+1).toString().padStart(2,'0');
+    document.getElementById('exp-month').textContent = '฿'+allExpenses.filter(e=>{const d=parseExpDate(e.date);return d&&d.startsWith(mStr);}).reduce((s,e)=>s+(e.amount||0),0).toLocaleString();
+  } catch(err) { document.getElementById('expense-list').innerHTML = '<div class="report-empty">โหลดไม่ได้: '+err.message+'</div>'; }
+}
+
+function parseExpDate(str) {
+  if(!str) return '';
+  const m = String(str).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  return m ? m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0') : '';
+}
+
+function renderExpenses() {
+  const el = document.getElementById('expense-list');
+  if(!allExpenses.length){el.innerHTML='<div class="report-empty">ไม่มีรายจ่ายในช่วงนี้</div>';return;}
+  const byDay={};
+  allExpenses.forEach(e=>{const d=parseExpDate(e.date)||e.date;if(!byDay[d])byDay[d]={total:0,items:[]};byDay[d].total+=e.amount||0;byDay[d].items.push(e);});
+  const days=Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
+  el.innerHTML=days.map(d=>{
+    const dd=new Date(d+'T12:00:00+07:00');
+    const ds=isNaN(dd)?d:dd.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
+    const rows=byDay[d].items.map(e=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+      <div><span style="background:#fee2e2;color:var(--red);font-size:11px;padding:2px 6px;border-radius:8px;margin-right:6px;">${e.category}</span>${e.name}</div>
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-weight:700;color:var(--red);">฿${(e.amount||0).toLocaleString()}</span>
+      <button onclick="deleteExpenseItem('${e.date}','${e.name}',${e.amount})" style="background:#fee2e2;border:none;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:var(--red);">ลบ</button></div>
+    </div>`).join('');
+    return `<div style="margin-bottom:14px;background:var(--card);border-radius:14px;padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.07);">
+      <div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px;color:var(--blue);padding-bottom:8px;border-bottom:2px solid var(--border);margin-bottom:4px;">
+        <span>${ds}</span><span style="color:var(--red);">฿${byDay[d].total.toLocaleString()}</span></div>
+      ${rows}</div>`;
+  }).join('');
+}
+
+function openAddExpense() {
+  document.getElementById('exp-name').value='';
+  document.getElementById('exp-amount').value='';
+  document.getElementById('exp-note').value='';
+  document.getElementById('expense-modal').classList.add('open');
+}
+function closeExpenseModal(ev) {
+  if(!ev||ev.target===document.getElementById('expense-modal')) document.getElementById('expense-modal').classList.remove('open');
+}
+async function saveExpense() {
+  const name=document.getElementById('exp-name').value.trim();
+  const amount=parseFloat(document.getElementById('exp-amount').value)||0;
+  if(!name||!amount){showToast('❌ กรุณากรอกรายการและจำนวนเงิน');return;}
+  try {
+    const res=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({
+      action:'addExpense',category:document.getElementById('exp-cat').value,
+      name,amount,note:document.getElementById('exp-note').value
+    }),redirect:'follow'});
+    const data=JSON.parse(await res.text());
+    if(data.status!=='success')throw new Error(data.message);
+    closeExpenseModal();
+    showToast('✅ บันทึกรายจ่ายแล้ว');
+    loadExpenses('today');
+  } catch(err){showToast('❌ '+err.message);}
+}
+async function deleteExpenseItem(date,name,amount) {
+  if(!confirm('ลบรายจ่าย: '+name+' ฿'+amount+'?'))return;
+  try {
+    const res=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'deleteExpense',date,name,amount}),redirect:'follow'});
+    const data=JSON.parse(await res.text());
+    if(data.status!=='success')throw new Error(data.message||'ลบไม่สำเร็จ');
+    showToast('✅ ลบแล้ว'); loadExpenses('today');
+  } catch(err){showToast('❌ '+err.message);}
+}
+
 </script>
 </body>
 </html>
