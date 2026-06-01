@@ -18,7 +18,10 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 #login-screen{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:linear-gradient(160deg,var(--blue),var(--blue2));z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
 .login-logo{font-size:48px;margin-bottom:8px;}
 .login-title{color:#fff;font-size:20px;font-weight:700;margin-bottom:4px;}
-.login-sub{color:rgba(255,255,255,.7);font-size:13px;margin-bottom:32px;}
+.login-sub{color:rgba(255,255,255,.7);font-size:13px;margin-bottom:16px;}
+.login-role-tabs{display:flex;gap:8px;margin-bottom:24px;}
+.login-role-btn{flex:1;padding:8px 12px;border-radius:12px;border:2px solid rgba(255,255,255,.4);background:transparent;color:rgba(255,255,255,.7);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;}
+.login-role-btn.active{background:rgba(255,255,255,.25);border-color:#fff;color:#fff;}
 .pin-dots{display:flex;gap:14px;margin-bottom:32px;}
 .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.6);background:transparent;transition:.15s;}
 .pin-dot.filled{background:#fff;border-color:#fff;}
@@ -241,6 +244,11 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e293b;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;z-index:999;transition:transform .3s;white-space:nowrap;}
 .toast.show{transform:translateX(-50%) translateY(0);}
 .auto-bar{background:#eff6ff;text-align:center;font-size:11px;color:var(--blue);padding:4px;}
+/* ── Kitchen Role ── */
+.role-kitchen .action-btn[onclick*="openEditOrder"],
+.role-kitchen .action-btn[onclick*="ยกเลิก"] { display:none; }
+.role-kitchen #nav-menu,.role-kitchen #nav-report,.role-kitchen #nav-ingredient { display:none !important; }
+.kitchen-badge{display:inline-block;background:#ea580c;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;margin-left:8px;}
 </style>
 </head>
 <body>
@@ -264,9 +272,13 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 </div>
 
 <div id="login-screen">
-  <div class="login-logo">🍳</div>
-  <div class="login-title">ครัวพอใจ — หลังบ้าน</div>
+  <div class="login-logo" id="login-logo">🍳</div>
+  <div class="login-title" id="login-title">ครัวพอใจ — หลังบ้าน</div>
   <div class="login-sub">กรอก PIN 4 หลักเพื่อเข้าใช้งาน</div>
+  <div class="login-role-tabs">
+    <button class="login-role-btn active" id="tab-admin" onclick="setLoginRole('admin')">👩‍💼 แอดมิน</button>
+    <button class="login-role-btn" id="tab-kitchen" onclick="setLoginRole('kitchen')">👨‍🍳 หลังครัว</button>
+  </div>
   <div class="pin-dots">
     <div class="pin-dot" id="d0"></div>
     <div class="pin-dot" id="d1"></div>
@@ -525,9 +537,22 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw-_hcz2P3IXtrJ
 // ══════════════════════════════════════════
 //  🔐 PIN — เปลี่ยนรหัสที่นี่
 // ══════════════════════════════════════════
-const ADMIN_PIN = '8668';   // ← เปลี่ยน PIN ได้ที่นี่
+const ADMIN_PIN   = '8668';   // ← PIN แอดมิน
+const KITCHEN_PIN = '1234';   // ← PIN หลังครัว (เปลี่ยนได้)
 
-let pinInput = '';
+let pinInput   = '';
+let loginRole  = 'admin'; // 'admin' | 'kitchen'
+
+function setLoginRole(role) {
+  loginRole = role;
+  document.getElementById('tab-admin').classList.toggle('active', role === 'admin');
+  document.getElementById('tab-kitchen').classList.toggle('active', role === 'kitchen');
+  document.getElementById('login-logo').textContent   = role === 'kitchen' ? '👨‍🍳' : '🍳';
+  document.getElementById('login-title').textContent  = role === 'kitchen' ? 'ครัวพอใจ — หลังครัว' : 'ครัวพอใจ — หลังบ้าน';
+  pinInput = '';
+  updateDots(false);
+  document.getElementById('pin-error').textContent = '';
+}
 
 function pinPress(n) {
   if (!n) return;
@@ -549,8 +574,10 @@ function updateDots(err) {
   }
 }
 function checkPin() {
-  if (pinInput === ADMIN_PIN) {
+  const correctPin = loginRole === 'kitchen' ? KITCHEN_PIN : ADMIN_PIN;
+  if (pinInput === correctPin) {
     sessionStorage.setItem('kpj_auth', '1');
+    sessionStorage.setItem('kpj_role', loginRole);
     document.getElementById('login-screen').style.display = 'none';
     initApp();
   } else {
@@ -574,6 +601,7 @@ document.addEventListener('visibilitychange', async () => {
 });
 
 function initApp() {
+  applyRoleUI();
   requestWakeLock(); // เปิดหน้าจอค้างไว้
   setInterval(loadOrders, 30000); // เช็คออเดอร์ทุก 30 วินาที
   loadOrders();
@@ -583,6 +611,23 @@ function initApp() {
 if (sessionStorage.getItem('kpj_auth') === '1') {
   document.getElementById('login-screen').style.display = 'none';
   initApp();
+}
+
+function applyRoleUI() {
+  const role = sessionStorage.getItem('kpj_role') || 'admin';
+  if (role === 'kitchen') {
+    document.body.classList.add('role-kitchen');
+    // เพิ่ม badge ใน header
+    const titleEl = document.querySelector('.header-title');
+    if (titleEl && !titleEl.querySelector('.kitchen-badge')) {
+      titleEl.innerHTML += '<span class="kitchen-badge">👨‍🍳 หลังครัว</span>';
+    }
+    // default filter เฉพาะออเดอร์ที่ต้องทำ
+    activeOrderFilter = 'รอทำ';
+    document.querySelectorAll('#page-orders .tab').forEach(t => t.classList.remove('active'));
+    const tabWaiting = document.querySelector('#page-orders .tab[onclick*="รอทำ"]');
+    if (tabWaiting) tabWaiting.classList.add('active');
+  }
 }
 
 let allOrders   = [];
@@ -742,12 +787,14 @@ function orderCard(o) {
 }
 
 function getActions(status, num) {
-  const editBtn = `<button class="action-btn" style="background:#f0fdf4;color:#16a34a;" onclick="openEditOrder('${num}')">✏️ แก้ไข</button>`;
+  const isKitchen = document.body.classList.contains('role-kitchen');
+  const editBtn   = isKitchen ? '' : `<button class="action-btn" style="background:#f0fdf4;color:#16a34a;" onclick="openEditOrder('${num}')">✏️ แก้ไข</button>`;
+  const cancelBtn = isKitchen ? '' : `<button class="action-btn btn-cancel" onclick="updateStatus('${num}','ยกเลิก')">❌ ยกเลิก</button>`;
   const map = {
-    'รอทำ':      `<button class="action-btn btn-confirm" onclick="updateStatus('${num}','รับออเดอร์')">✅ รับออเดอร์</button>${editBtn}<button class="action-btn btn-cancel" onclick="updateStatus('${num}','ยกเลิก')">❌ ยกเลิก</button>`,
-    'รับออเดอร์': `<button class="action-btn btn-cooking" onclick="startCooking('${num}')">👨‍🍳 เริ่มทำ</button>${editBtn}<button class="action-btn btn-cancel" onclick="updateStatus('${num}','ยกเลิก')">❌ ยกเลิก</button>`,
+    'รอทำ':      `<button class="action-btn btn-confirm" onclick="updateStatus('${num}','รับออเดอร์')">✅ รับออเดอร์</button>${editBtn}${cancelBtn}`,
+    'รับออเดอร์': `<button class="action-btn btn-cooking" onclick="startCooking('${num}')">👨‍🍳 เริ่มทำ</button>${editBtn}${cancelBtn}`,
     'กำลังทำ':   `<button class="action-btn btn-cooking" onclick="openCookScreen('${num}')">👨‍🍳 ดูรายการ</button><button class="action-btn btn-done" onclick="updateStatus('${num}','เสร็จแล้ว')">🎉 ทำเสร็จ</button>`,
-    'เสร็จแล้ว': `<button class="action-btn btn-deliver" onclick="updateStatus('${num}','ส่งแล้ว')">🛵 ส่งแล้ว / รับแล้ว</button>`,
+    'เสร็จแล้ว': isKitchen ? '' : `<button class="action-btn btn-deliver" onclick="updateStatus('${num}','ส่งแล้ว')">🛵 ส่งแล้ว / รับแล้ว</button>`,
   };
   return map[status] || '';
 }
