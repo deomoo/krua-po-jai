@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>หลังบ้าน — ครัวพอใจ</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --blue:#2563eb;--blue2:#1d4ed8;--green:#16a34a;--red:#dc2626;
+  --orange:#ea580c;--gray:#64748b;--bg:#f1f5f9;--card:#fff;
+  --text:#1e293b;--text2:#64748b;--border:#e2e8f0;
+}
+html{overflow-x:hidden;}
+body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:72px;overflow-x:hidden;width:100%;}
+
+/* ── Login Screen ── */
+#login-screen{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:linear-gradient(160deg,var(--blue),var(--blue2));z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+.login-logo{font-size:48px;margin-bottom:8px;}
+.login-title{color:#fff;font-size:20px;font-weight:700;margin-bottom:4px;}
+.login-sub{color:rgba(255,255,255,.7);font-size:13px;margin-bottom:16px;}
+.login-role-tabs{display:flex;gap:8px;margin-bottom:24px;}
+.login-role-btn{flex:1;padding:8px 12px;border-radius:12px;border:2px solid rgba(255,255,255,.4);background:transparent;color:rgba(255,255,255,.7);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;}
+.login-role-btn.active{background:rgba(255,255,255,.25);border-color:#fff;color:#fff;}
+.pin-dots{display:flex;gap:14px;margin-bottom:32px;}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.6);background:transparent;transition:.15s;}
+.pin-dot.filled{background:#fff;border-color:#fff;}
+.pin-dot.error{background:#ef4444;border-color:#ef4444;}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px;}
+.pin-btn{background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;font-weight:600;padding:18px;border-radius:16px;cursor:pointer;font-family:inherit;transition:.1s;-webkit-tap-highlight-color:rgba(255,255,255,.2);}
+.pin-btn:active{background:rgba(255,255,255,.3);transform:scale(.95);}
+.pin-btn.del{font-size:18px;}
+.pin-error{color:#fca5a5;font-size:13px;margin-top:12px;min-height:20px;text-align:center;}
+
+/* ── Cooking Fullscreen ── */
+#cook-screen{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:#1e293b;z-index:8888;display:none;flex-direction:column;}
+.cook-header{background:#ea580c;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;}
+.cook-header-left{color:#fff;}
+.cook-order-num{font-size:22px;font-weight:800;}
+.cook-customer{font-size:14px;opacity:.85;margin-top:2px;}
+.cook-close{background:rgba(255,255,255,.2);border:none;color:#fff;font-size:14px;padding:8px 16px;border-radius:20px;cursor:pointer;font-family:inherit;font-weight:600;}
+.cook-body{flex:1;overflow-y:auto;padding:20px;}
+.cook-title{color:#94a3b8;font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px;}
+.cook-items{display:flex;flex-direction:column;gap:12px;}
+.cook-item{background:#334155;border-radius:16px;padding:18px 20px;display:flex;align-items:center;gap:16px;}
+.cook-item-qty{background:#ea580c;color:#fff;font-size:22px;font-weight:800;min-width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;}
+.cook-item-name{font-size:20px;font-weight:700;color:#f1f5f9;line-height:1.3;}
+.cook-item-addon{font-size:13px;color:#94a3b8;margin-top:4px;}
+.cook-note{background:#451a03;border:1px solid #ea580c;border-radius:12px;padding:14px 18px;margin-top:16px;color:#fed7aa;font-size:15px;}
+.cook-footer{padding:16px 20px;background:#0f172a;}
+.cook-done-btn{width:100%;background:#16a34a;color:#fff;border:none;font-size:18px;font-weight:700;padding:18px;border-radius:16px;cursor:pointer;font-family:inherit;}
+
+/* ── Header ── */
+.header{background:linear-gradient(135deg,var(--blue),var(--blue2));padding:14px 16px;color:#fff;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;}
+.header-title{font-size:17px;font-weight:700;}
+.header-sub{font-size:11px;opacity:.8;margin-top:2px;}
+.refresh-btn{background:rgba(255,255,255,.2);border:none;color:#fff;padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer;font-family:inherit;}
+
+/* ── Report Page ── */
+.report-section{padding:16px;}
+.report-date-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+.date-input{flex:1;min-width:120px;border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-family:inherit;font-size:13px;color:var(--text);background:#fff;}
+.btn-report{background:var(--blue);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.btn-report:active{opacity:.8;}
+.report-kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;}
+.kpi-card{background:var(--card);border-radius:14px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.07);}
+.kpi-label{font-size:12px;color:var(--text2);margin-bottom:4px;}
+.kpi-val{font-size:22px;font-weight:800;color:var(--text);}
+.kpi-val.green{color:var(--green);}
+.kpi-val.blue{color:var(--blue);}
+.report-card{background:var(--card);border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:14px;}
+.report-card-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.report-table{width:100%;border-collapse:collapse;font-size:13px;}
+.report-table th{text-align:left;color:var(--text2);font-weight:600;padding:4px 8px 8px;border-bottom:1px solid var(--border);}
+.report-table td{padding:8px;border-bottom:1px solid var(--border);vertical-align:top;}
+.report-table tr:last-child td{border-bottom:none;}
+.report-table .num{text-align:right;font-weight:700;}
+.report-bar-wrap{display:flex;align-items:center;gap:8px;margin:4px 0;}
+.report-bar-label{font-size:12px;width:90px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.report-bar-bg{flex:1;background:var(--bg);border-radius:6px;height:10px;overflow:hidden;}
+.report-bar-fill{height:100%;border-radius:6px;background:var(--blue);transition:.3s;}
+.report-bar-val{font-size:12px;font-weight:700;color:var(--text2);width:50px;text-align:right;}
+.report-empty{text-align:center;color:var(--text2);padding:32px 0;font-size:14px;}
+.quick-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.quick-btn{background:#e0e7ff;color:var(--blue);border:none;border-radius:8px;padding:6px 12px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+.quick-btn:active{opacity:.75;}
+
+/* ── Edit Order Sheet ── */
+.edit-overlay{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;animation:fadeIn .2s;}
+.edit-overlay.open{display:block;}
+.edit-order-sheet{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:201;display:flex;flex-direction:column;max-height:90vh;transform:translateY(100%);transition:transform .3s ease;}
+.edit-order-sheet.open{transform:translateY(0);}
+.edit-sheet-header{padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.edit-sheet-title{font-size:16px;font-weight:800;color:var(--text);}
+.edit-close-btn{background:var(--bg);border:none;color:var(--text2);font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.edit-sheet-body{flex:1;overflow-y:auto;padding:12px 16px;}
+.edit-item-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.edit-item-row:last-child{border-bottom:none;}
+.edit-item-info{flex:1;min-width:0;}
+.edit-item-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.edit-addon-tag{font-size:11px;color:var(--orange);font-weight:600;}
+.edit-item-price{font-size:12px;color:var(--text2);margin-top:2px;}
+.edit-item-controls{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.qty-ctrl-btn{background:var(--bg);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;line-height:1;}
+.qty-ctrl-num{font-size:16px;font-weight:800;min-width:22px;text-align:center;}
+.del-item-btn{background:#fef2f2;border:none;color:var(--red);width:30px;height:30px;border-radius:8px;font-size:14px;cursor:pointer;margin-left:4px;}
+.btn-add-menu{width:100%;margin-top:12px;background:#eff6ff;color:var(--blue);border:2px dashed #93c5fd;border-radius:12px;padding:12px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
+.btn-add-menu:active{opacity:.8;}
+.edit-sheet-footer{padding:12px 16px 20px;border-top:1px solid var(--border);background:#fff;}
+.edit-total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:15px;font-weight:700;}
+.edit-total-amt{font-size:20px;color:var(--green);}
+.edit-footer-btns{display:flex;gap:10px;}
+.btn-edit-cancel{flex:1;background:var(--bg);border:none;color:var(--text2);font-family:inherit;font-size:14px;font-weight:700;padding:13px;border-radius:12px;cursor:pointer;}
+.btn-edit-save{flex:2;background:var(--blue);border:none;color:#fff;font-family:inherit;font-size:14px;font-weight:700;padding:13px;border-radius:12px;cursor:pointer;}
+.btn-edit-save:active{opacity:.85;}
+.edit-empty{text-align:center;color:var(--text2);padding:24px 0;font-size:13px;}
+
+/* ── Menu Picker ── */
+.menu-picker{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:210;display:flex;flex-direction:column;max-height:70vh;transform:translateY(100%);transition:transform .3s ease;}
+.menu-picker.open{transform:translateY(0);}
+.picker-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.picker-title{font-size:15px;font-weight:800;}
+.picker-close-btn{background:var(--bg);border:none;color:var(--text2);font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer;}
+.picker-search{padding:10px 16px;border-bottom:1px solid var(--border);}
+.picker-search-input{width:100%;border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-family:inherit;font-size:13px;}
+.picker-list{flex:1;overflow-y:auto;padding:8px 0;}
+.picker-item{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;cursor:pointer;border-bottom:1px solid var(--border);}
+.picker-item:last-child{border-bottom:none;}
+.picker-item:active{background:var(--bg);}
+.picker-item-name{font-size:14px;font-weight:700;color:var(--text);}
+.picker-item-cat{font-size:11px;color:var(--text2);}
+.picker-item-price{font-size:15px;font-weight:800;color:var(--blue);}
+
+/* ── Bottom Nav ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;z-index:60;height:58px;}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:transparent;font-family:inherit;font-size:10px;color:var(--text2);cursor:pointer;padding:4px 2px;min-width:0;}
+.nav-btn .nav-icon{font-size:18px;line-height:1;}
+.nav-btn.active{color:var(--blue);}
+.nav-btn .nav-icon{font-size:20px;line-height:1;}
+.nav-badge{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center;position:absolute;top:6px;right:calc(50% - 18px);}
+.nav-btn{position:relative;}
+
+/* ── Pages ── */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── Summary Bar ── */
+.summary{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;scrollbar-width:none;}
+.summary::-webkit-scrollbar{display:none;}
+.sum-card{flex:0 0 auto;background:var(--card);border-radius:12px;padding:10px 14px;min-width:90px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.sum-num{font-size:22px;font-weight:800;}
+.sum-label{font-size:11px;color:var(--text2);margin-top:2px;}
+.sum-card.new .sum-num{color:var(--orange);}
+.sum-card.doing .sum-num{color:var(--blue);}
+.sum-card.done .sum-num{color:var(--green);}
+
+/* ── Filter Tabs ── */
+.filter-wrap{padding:0 16px 10px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;}
+.filter-wrap::-webkit-scrollbar{display:none;}
+.tab{flex:0 0 auto;padding:7px 16px;border-radius:20px;font-size:13px;border:1.5px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;font-family:inherit;}
+.tab.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+/* ── Order Cards ── */
+.orders-wrap{padding:0 16px;}
+.order-card{background:var(--card);border-radius:16px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.card-header{padding:12px 14px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.order-num{font-size:16px;font-weight:800;color:var(--blue);}
+.order-time{font-size:11px;color:var(--text2);margin-top:2px;}
+.status-badge{flex:0 0 auto;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;}
+.badge-รอทำ{background:#fff7ed;color:#c2410c;}
+.badge-รับออเดอร์{background:#eff6ff;color:#1d4ed8;}
+.badge-กำลังทำ{background:#fef3c7;color:#b45309;}
+.badge-เสร็จแล้ว{background:#f0fdf4;color:#15803d;}
+.badge-ส่งแล้ว{background:#f0fdf4;color:#15803d;}
+.badge-ยกเลิก{background:#fef2f2;color:#991b1b;}
+.card-body{padding:0 14px 12px;}
+.order-customer{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.type-tag{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500;}
+.type-ส่ง{background:#ede9fe;color:#6d28d9;}
+.type-รับหน้าร้าน{background:#ecfdf5;color:#065f46;}
+.order-items{font-size:16px;color:var(--text);font-weight:600;line-height:1.5;margin-bottom:6px;}
+.order-note{font-size:12px;color:var(--orange);margin-bottom:4px;}
+.order-address{font-size:12px;color:var(--text2);margin-bottom:6px;}
+.order-total{font-size:15px;font-weight:700;color:var(--blue);}
+.card-actions{padding:10px 14px 14px;display:flex;gap:8px;flex-wrap:wrap;}
+.action-btn{flex:1;min-width:80px;max-width:100%;padding:10px 6px;border:none;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.action-btn:active{opacity:.7;transform:scale(.97);}
+.btn-confirm{background:#dbeafe;color:#1d4ed8;}
+.btn-cooking{background:#fef3c7;color:#b45309;}
+.btn-done{background:#dcfce7;color:#15803d;}
+.btn-deliver{background:#d1fae5;color:#065f46;}
+.btn-cancel{background:#fee2e2;color:#991b1b;}
+
+/* ── Menu Page ── */
+.menu-search{padding:12px 16px 0;}
+.search-input{width:100%;padding:10px 16px;border-radius:12px;border:1.5px solid var(--border);background:var(--card);font-size:14px;font-family:inherit;color:var(--text);outline:none;}
+.search-input:focus{border-color:var(--blue);}
+
+.menu-list{padding:12px 16px;}
+.menu-item{background:var(--card);border-radius:14px;margin-bottom:10px;padding:14px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,.07);}
+.menu-emoji{font-size:28px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:10px;flex:0 0 auto;}
+.menu-info{flex:1;min-width:0;}
+.menu-name{font-size:14px;font-weight:700;margin-bottom:2px;}
+.menu-cat{font-size:11px;color:var(--text2);}
+.menu-price{font-size:13px;font-weight:600;color:var(--blue);margin-top:2px;}
+.menu-actions{display:flex;align-items:center;gap:10px;flex:0 0 auto;}
+
+/* Toggle Switch */
+.toggle{position:relative;width:44px;height:24px;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:24px;cursor:pointer;transition:.2s;}
+.toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.toggle input:checked + .toggle-slider{background:var(--green);}
+.toggle input:checked + .toggle-slider:before{transform:translateX(20px);}
+
+.edit-btn{background:var(--bg);border:none;padding:7px 10px;border-radius:8px;font-size:13px;cursor:pointer;color:var(--blue);}
+.del-btn{background:#fee2e2;border:none;padding:7px 10px;border-radius:8px;font-size:13px;cursor:pointer;color:var(--red);}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:76px;right:18px;width:52px;height:52px;border-radius:50%;background:var(--blue);color:#fff;border:none;font-size:26px;cursor:pointer;box-shadow:0 4px 12px rgba(37,99,235,.4);display:flex;align-items:center;justify-content:center;z-index:55;}
+.fab:active{transform:scale(.93);}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:flex-end;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;width:100%;border-radius:20px 20px 0 0;padding:24px 20px 36px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:20px;}
+.form-group{margin-bottom:16px;}
+.form-label{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px;display:block;}
+.form-input{width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);font-size:14px;font-family:inherit;color:var(--text);outline:none;}
+.form-input:focus{border-color:var(--blue);}
+.form-select{width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);font-size:14px;font-family:inherit;color:var(--text);background:#fff;outline:none;}
+.modal-btns{display:flex;gap:10px;margin-top:20px;}
+.modal-btn{flex:1;padding:13px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-save{background:var(--blue);color:#fff;}
+.btn-close{background:var(--bg);color:var(--text2);}
+
+/* ── Empty / Loading ── */
+.empty{text-align:center;padding:60px 20px;color:var(--text2);}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+#loading{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:12px;}
+#loading .spin{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e293b;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;z-index:999;transition:transform .3s;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.auto-bar{background:#eff6ff;text-align:center;font-size:11px;color:var(--blue);padding:4px;}
+/* ── Kitchen Role ── */
+.role-kitchen .action-btn[onclick*="openEditOrder"],
+.role-kitchen .action-btn[onclick*="ยกเลิก"] { display:none; }
+.role-kitchen #nav-menu,.role-kitchen #nav-report,.role-kitchen #nav-ingredient { display:none !important; }
+.kitchen-badge{display:inline-block;background:#ea580c;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;margin-left:8px;}
+</style>
+</head>
+<body>
+
+<div id="cook-screen">
+  <div class="cook-header">
+    <div class="cook-header-left">
+      <div class="cook-order-num" id="cook-num">👨‍🍳 กำลังทำ</div>
+      <div class="cook-customer" id="cook-customer"></div>
+    </div>
+    <button class="cook-close" onclick="closeCookScreen()">✕ ปิด</button>
+  </div>
+  <div class="cook-body">
+    <div class="cook-title">🍽️ รายการที่ต้องทำ</div>
+    <div class="cook-items" id="cook-items"></div>
+    <div id="cook-note-wrap"></div>
+  </div>
+  <div class="cook-footer">
+    <button class="cook-done-btn" id="cook-done-btn">🎉 ทำเสร็จแล้ว</button>
+  </div>
+</div>
+
+<div id="login-screen">
+  <div class="login-logo" id="login-logo">🍳</div>
+  <div class="login-title" id="login-title">ครัวพอใจ — หลังบ้าน</div>
+  <div class="login-sub">กรอก PIN 4 หลักเพื่อเข้าใช้งาน</div>
+  <div class="login-role-tabs">
+    <button class="login-role-btn active" id="tab-admin" onclick="setLoginRole('admin')">👩‍💼 แอดมิน</button>
+  </div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+  <div class="pin-pad">
+    <button class="pin-btn" onclick="pinPress('1')">1</button>
+    <button class="pin-btn" onclick="pinPress('2')">2</button>
+    <button class="pin-btn" onclick="pinPress('3')">3</button>
+    <button class="pin-btn" onclick="pinPress('4')">4</button>
+    <button class="pin-btn" onclick="pinPress('5')">5</button>
+    <button class="pin-btn" onclick="pinPress('6')">6</button>
+    <button class="pin-btn" onclick="pinPress('7')">7</button>
+    <button class="pin-btn" onclick="pinPress('8')">8</button>
+    <button class="pin-btn" onclick="pinPress('9')">9</button>
+    <button class="pin-btn" onclick="pinPress('')"></button>
+    <button class="pin-btn" onclick="pinPress('0')">0</button>
+    <button class="pin-btn del" onclick="pinDel()">⌫</button>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+</div>
+
+<div id="loading"><div class="spin"></div><span>กำลังโหลด...</span></div>
+<div class="toast" id="toast"></div>
+
+<div class="header">
+  <div>
+    <div class="header-title">🍽️ ครัวพอใจ — หลังบ้าน</div>
+    <div class="header-sub" id="last-update">กำลังโหลด...</div>
+  </div>
+  <button class="refresh-btn" onclick="refreshCurrent()">🔄</button>
+</div>
+<div class="auto-bar">รีเฟรชอัตโนมัติทุก 30 วินาที</div>
+
+<div class="page active" id="page-orders">
+  <div class="summary">
+    <div class="sum-card new"><div class="sum-num" id="cnt-new">0</div><div class="sum-label">รอทำ</div></div>
+    <div class="sum-card doing"><div class="sum-num" id="cnt-doing">0</div><div class="sum-label">กำลังทำ</div></div>
+    <div class="sum-card done"><div class="sum-num" id="cnt-done">0</div><div class="sum-label">เสร็จ/ส่ง</div></div>
+    <div class="sum-card" style="background:#f8fafc"><div class="sum-num" id="cnt-all" style="color:#475569">0</div><div class="sum-label">ทั้งหมด</div></div>
+  </div>
+  <div class="filter-wrap">
+    <button class="tab active" onclick="filterOrders('all',this)">ทั้งหมด</button>
+    <button class="tab" onclick="filterOrders('รอทำ',this)">🔴 รอทำ</button>
+    <button class="tab" onclick="filterOrders('รับออเดอร์',this)">🔵 รับแล้ว</button>
+    <button class="tab" onclick="filterOrders('กำลังทำ',this)">🟡 กำลังทำ</button>
+    <button class="tab" onclick="filterOrders('เสร็จแล้ว',this)">🟢 เสร็จ</button>
+    <button class="tab" onclick="filterOrders('ส่งแล้ว',this)">✅ ส่งแล้ว</button>
+    <button class="tab" onclick="filterOrders('ยกเลิก',this)">❌ ยกเลิก</button>
+  </div>
+  <div class="orders-wrap" id="orders-container">
+    <div class="empty"><div class="empty-icon">📋</div><div>ยังไม่มีออเดอร์</div></div>
+  </div>
+</div>
+
+<div class="page" id="page-menu">
+  <div class="menu-search">
+    <input class="search-input" type="text" placeholder="🔍 ค้นหาเมนู..." oninput="filterMenu(this.value)">
+  </div>
+  <div class="filter-wrap" style="margin-top:10px;">
+    <button class="tab active" onclick="filterMenuCat('all',this)">ทั้งหมด</button>
+    <button class="tab" onclick="filterMenuCat('ผัด',this)">🥘 ผัด</button>
+    <button class="tab" onclick="filterMenuCat('ข้าว',this)">🍚 ข้าว</button>
+    <button class="tab" onclick="filterMenuCat('ก๋วยเตี๋ยว',this)">🍜 เส้น</button>
+    <button class="tab" onclick="filterMenuCat('ต้ม/แกง',this)">🍲 ต้ม/แกง</button>
+    <button class="tab" onclick="filterMenuCat('เครื่องดื่ม',this)">🥤 เครื่องดื่ม</button>
+  </div>
+  <div class="menu-list" id="menu-container">
+    <div class="empty"><div class="empty-icon">🍽️</div><div>ยังไม่มีเมนู</div></div>
+  </div>
+</div>
+
+<button class="fab" id="fab-add" style="display:none" onclick="openAddModal()">＋</button>
+
+<div class="modal-overlay" id="menu-modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">➕ เพิ่มเมนูใหม่</div>
+    <input type="hidden" id="edit-row">
+    <div class="form-group">
+      <label class="form-label">ชื่อเมนู *</label>
+      <input class="form-input" id="f-name" type="text" placeholder="เช่น ผัดกระเพราหมูกรอบ">
+    </div>
+    <div class="form-group">
+      <label class="form-label">หมวดหมู่ *</label>
+      <select class="form-select" id="f-cat">
+        <option value="ผัด">🥘 ผัด</option>
+        <option value="ข้าว">🍚 ข้าว</option>
+        <option value="ก๋วยเตี๋ยว">🍜 ก๋วยเตี๋ยว</option>
+        <option value="ต้ม/แกง">🍲 ต้ม/แกง</option>
+        <option value="เครื่องดื่ม">🥤 เครื่องดื่ม</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">ราคา (฿) *</label>
+      <input class="form-input" id="f-price" type="number" placeholder="60" min="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">ต้นทุน (฿)</label>
+      <input class="form-input" id="f-cost" type="number" placeholder="0" min="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Add-ons (คั่นด้วยจุลภาค)</label>
+      <input class="form-input" id="f-addons" type="text" placeholder="พิเศษ, ไข่ดาว, ไข่ชัน">
+    </div>
+    <div class="form-group">
+      <label class="form-label">สถานะ</label>
+      <select class="form-select" id="f-status">
+        <option value="มี">✅ มีสินค้า</option>
+        <option value="หมด">❌ หมด</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn btn-close" onclick="closeMenuModal()">ยกเลิก</button>
+      <button class="modal-btn btn-save" onclick="saveMenu()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Edit Order Bottom Sheet ════ -->
+<div id="edit-overlay" class="edit-overlay" onclick="closeEditOrder()"></div>
+
+<div id="edit-order-sheet" class="edit-order-sheet">
+  <div class="edit-sheet-header">
+    <span class="edit-sheet-title" id="edit-order-title">แก้ไขออเดอร์</span>
+    <button class="edit-close-btn" onclick="closeEditOrder()">✕</button>
+  </div>
+  <div class="edit-sheet-body">
+    <div id="edit-items-body"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="btn-add-menu" style="flex:1;margin-top:0;" onclick="openMenuPicker()">➕ เพิ่มเมนู</button>
+      <button class="btn-add-menu" style="flex:1;margin-top:0;background:#faf5ff;border-color:#c4b5fd;color:#7c3aed;" onclick="addCustomEditItem()">⭐ รายการพิเศษ</button>
+    </div>
+  </div>
+  <div class="edit-sheet-footer">
+    <div class="edit-total-row">
+      <span>ยอดรวม</span>
+      <span class="edit-total-amt" id="edit-total">฿0</span>
+    </div>
+    <div class="edit-footer-btns">
+      <button class="btn-edit-cancel" onclick="closeEditOrder()">ยกเลิก</button>
+      <button class="btn-edit-save" onclick="saveEditOrder()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Menu Picker ════ -->
+<div id="menu-picker" class="menu-picker">
+  <div class="picker-header">
+    <span class="picker-title">เลือกเมนู</span>
+    <button class="picker-close-btn" onclick="closeMenuPicker()">✕</button>
+  </div>
+  <div class="picker-search">
+    <input class="picker-search-input" type="text" placeholder="🔍 ค้นหาเมนู..." oninput="filterPickerMenu(this.value)">
+  </div>
+  <div id="menu-picker-list" class="picker-list"></div>
+</div>
+
+<div class="page" id="page-ingredient">
+  <div style="padding:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h2 style="font-size:16px;font-weight:600;margin:0;">🧅 วัตถุดิบ</h2>
+      <button onclick="loadIngredients()" style="background:none;border:1px solid #ddd;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;">🔄 รีเฟรช</button>
+    </div>
+    <div id="ingredient-list" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+  </div>
+</div>
+
+<div class="page" id="page-report">
+  <div class="report-section">
+    <div class="quick-btns">
+      <button class="quick-btn" onclick="setQuick('today')">วันนี้</button>
+      <button class="quick-btn" onclick="setQuick('yesterday')">เมื่อวาน</button>
+      <button class="quick-btn" onclick="setQuick('week')">7 วัน</button>
+      <button class="quick-btn" onclick="setQuick('month')">เดือนนี้</button>
+      <button class="quick-btn" onclick="setQuick('lastmonth')">เดือนที่แล้ว</button>
+    </div>
+    <div class="report-date-bar">
+      <input class="date-input" type="date" id="rpt-from" onchange="renderReport()">
+      <span style="color:var(--text2);font-size:13px;">ถึง</span>
+      <input class="date-input" type="date" id="rpt-to" onchange="renderReport()">
+    </div>
+
+    <!-- KPI -->
+    <div class="report-kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">💰 ยอดขายรวม</div>
+        <div class="kpi-val green" id="rpt-total">฿0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">📦 จำนวนออเดอร์</div>
+        <div class="kpi-val blue" id="rpt-count">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">🏠 รับที่ร้าน</div>
+        <div class="kpi-val" id="rpt-pickup">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">🛵 ส่ง</div>
+        <div class="kpi-val" id="rpt-delivery">0</div>
+      </div>
+    </div>
+
+    <!-- ยอดแต่ละวัน -->
+    <div class="report-card" id="rpt-daily-card">
+      <div class="report-card-title">📅 ยอดขายแต่ละวัน</div>
+      <div id="rpt-daily-body"><div class="report-empty">ยังไม่มีข้อมูล</div></div>
+    </div>
+
+    <!-- เมนูขายดี -->
+    <div class="report-card">
+      <div class="report-card-title">🏆 เมนูขายดี</div>
+      <div id="rpt-menu-body"><div class="report-empty">ยังไม่มีข้อมูล</div></div>
+    </div>
+
+    <!-- ช่องทาง -->
+    <div class="report-card">
+      <div class="report-card-title">📲 ช่องทางรับออเดอร์</div>
+      <div id="rpt-channel-body"><div class="report-empty">ยังไม่มีข้อมูล</div></div>
+    </div>
+
+    <!-- การชำระเงิน -->
+    <div class="report-card">
+      <div class="report-card-title">💳 วิธีชำระเงิน</div>
+      <div id="rpt-payment-body"><div class="report-empty">ยังไม่มีข้อมูล</div></div>
+    </div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-orders" onclick="showPage('orders')">
+    <span class="nav-icon">📋</span>
+    <span>ออเดอร์</span>
+    <span class="nav-badge" id="badge-orders" style="display:none">0</span>
+  </button>
+  <button class="nav-btn" id="nav-menu" onclick="showPage('menu')">
+    <span class="nav-icon">🍽️</span>
+    <span>จัดการเมนู</span>
+  </button>
+  <button class="nav-btn" id="nav-report" onclick="showPage('report')">
+    <span class="nav-icon">📊</span>
+    <span>รายงาน</span>
+  </button>
+  <button class="nav-btn" id="nav-ingredient" onclick="showPage('ingredient')">
+    <span class="nav-icon">🧅</span>
+    <span>วัตถุดิบ</span>
+  </button>
+</nav>
+
+<script>
+// ══════════════════════════════════════════
+//  🔧 ตั้งค่า URL
+// ══════════════════════════════════════════
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw-_hcz2P3IXtrJdmph_MdodAY-AIym34bV9isYtgTJIq3f3VHi2z4-3l0A5yRq-21SFg/exec';
+
+// ══════════════════════════════════════════
+//  🔐 PIN — เปลี่ยนรหัสที่นี่
+// ══════════════════════════════════════════
+const ADMIN_PIN   = '8668';   // ← PIN แอดมิน
+const KITCHEN_PIN = '1234';   // ← PIN หลังครัว (เปลี่ยนได้)
+
+let pinInput   = '';
+let loginRole  = 'admin'; // 'admin' | 'kitchen'
+
+function setLoginRole(role) {
+  loginRole = role;
+  document.getElementById('tab-admin').classList.toggle('active', role === 'admin');
+  document.getElementById('tab-kitchen').classList.toggle('active', role === 'kitchen');
+  document.getElementById('login-logo').textContent   = role === 'kitchen' ? '👨‍🍳' : '🍳';
+  document.getElementById('login-title').textContent  = role === 'kitchen' ? 'ครัวพอใจ — หลังครัว' : 'ครัวพอใจ — หลังบ้าน';
+  pinInput = '';
+  updateDots(false);
+  document.getElementById('pin-error').textContent = '';
+}
+
+function pinPress(n) {
+  if (!n) return;
+  if (pinInput.length >= 4) return;
+  pinInput += n;
+  updateDots();
+  if (pinInput.length === 4) setTimeout(checkPin, 150);
+}
+function pinDel() {
+  pinInput = pinInput.slice(0, -1);
+  document.getElementById('pin-error').textContent = '';
+  updateDots(false);
+}
+function updateDots(err) {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('d' + i);
+    d.classList.toggle('filled', i < pinInput.length);
+    d.classList.toggle('error', !!err);
+  }
+}
+function checkPin() {
+  const correctPin = loginRole === 'kitchen' ? KITCHEN_PIN : ADMIN_PIN;
+  if (pinInput === correctPin) {
+    sessionStorage.setItem('kpj_auth', '1');
+    sessionStorage.setItem('kpj_role', loginRole);
+    document.getElementById('login-screen').style.display = 'none';
+    initApp();
+  } else {
+    document.getElementById('pin-error').textContent = '❌ PIN ไม่ถูกต้อง กรุณาลองใหม่';
+    updateDots(true);
+    setTimeout(() => { pinInput = ''; updateDots(false); }, 800);
+  }
+}
+
+// ── Wake Lock: ป้องกันหน้าจอดับขณะใช้งานแอดมิน ──
+let wakeLock = null;
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+    } catch(e) { /* ไม่รองรับหรือถูกปฏิเสธ */ }
+  }
+}
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible') await requestWakeLock();
+});
+
+function initApp() {
+  applyRoleUI();
+  requestWakeLock(); // เปิดหน้าจอค้างไว้
+  setInterval(loadOrders, 30000); // เช็คออเดอร์ทุก 30 วินาที
+  loadOrders();
+}
+
+// ตรวจสอบ session ที่ login แล้ว (script อยู่ท้าย body — DOM พร้อมแล้ว)
+if (sessionStorage.getItem('kpj_auth') === '1') {
+  document.getElementById('login-screen').style.display = 'none';
+  initApp();
+}
+
+function applyRoleUI() {
+  const role = sessionStorage.getItem('kpj_role') || 'admin';
+  if (role === 'kitchen') {
+    document.body.classList.add('role-kitchen');
+    // เพิ่ม badge ใน header
+    const titleEl = document.querySelector('.header-title');
+    if (titleEl && !titleEl.querySelector('.kitchen-badge')) {
+      titleEl.innerHTML += '<span class="kitchen-badge">👨‍🍳 หลังครัว</span>';
+    }
+    // default filter เฉพาะออเดอร์ที่ต้องทำ
+    activeOrderFilter = 'รอทำ';
+    document.querySelectorAll('#page-orders .tab').forEach(t => t.classList.remove('active'));
+    const tabWaiting = document.querySelector('#page-orders .tab[onclick*="รอทำ"]');
+    if (tabWaiting) tabWaiting.classList.add('active');
+  }
+}
+
+let allOrders   = [];
+let allMenus    = [];
+let lastLatestOrderNum = ''; // 👈 ตัวแปรเช็คออเดอร์ล่าสุดเพื่อเล่นเสียง
+let activeOrderFilter = 'all';
+let activeMenuCat     = 'all';
+let menuSearchQ       = '';
+let currentPage       = 'orders';
+
+// ════════════════════════════════════════
+//  TEXT TO SPEECH (ระบบเสียงพูด - บังคับหาเสียงผู้หญิง)
+// ════════════════════════════════════════
+
+// โหลดรายการเสียงเตรียมไว้ก่อน (เบราว์เซอร์บางตัวต้องใช้เวลาโหลด)
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.getVoices();
+  };
+}
+
+function speakAlert(text) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel(); // ตัดเสียงเก่า
+    const msg = new SpeechSynthesisUtterance(text);
+    msg.lang = 'th-TH'; // ภาษาไทย
+    msg.rate = 0.9;     // ความเร็ว
+
+    // ดึงรายการเสียงทั้งหมดในเครื่อง
+    const voices = window.speechSynthesis.getVoices();
+    
+    // พยายามตามล่าหาเสียงผู้หญิงภาษาไทยยอดฮิตในระบบต่างๆ
+    const femaleVoice = voices.find(v => 
+      v.lang.includes('th') && 
+      (v.name.includes('Kanya') ||       // เสียงผู้หญิงของ Mac/iOS
+       v.name.includes('Premwadee') ||   // เสียงผู้หญิงของ Windows/Edge
+       v.name.includes('Google') ||      // เสียงผู้หญิงของ Google Chrome
+       v.name.includes('Female'))
+    );
+
+    // ถ้าหาเสียงผู้หญิงเจอ ให้สั่งใช้เสียงนั้นทันที
+    if (femaleVoice) {
+      msg.voice = femaleVoice;
+    }
+
+    window.speechSynthesis.speak(msg);
+  }
+}
+
+// ════════════════════════════════════════
+//  PAGE NAVIGATION
+// ════════════════════════════════════════
+function showPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+  document.getElementById('fab-add').style.display = page === 'menu' ? 'flex' : 'none';
+  if (page === 'menu' && allMenus.length === 0) loadMenus();
+  if (page === 'report') initReport();
+  if (page === 'ingredient') loadIngredients();
+}
+
+function refreshCurrent() {
+  if (currentPage === 'orders') loadOrders();
+  else loadMenus();
+}
+
+// ════════════════════════════════════════
+//  ORDERS
+// ════════════════════════════════════════
+async function loadOrders() {
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + '?action=orders');
+    const data = await res.json();
+    if (data.status !== 'success') throw new Error(data.message);
+    allOrders = data.orders || [];
+
+    // 👇 ระบบดักจับออเดอร์ใหม่และสั่งให้พูด
+    if (allOrders.length > 0) {
+      const currentLatest = allOrders[0].orderNum;
+      
+      if (lastLatestOrderNum !== '' && currentLatest !== lastLatestOrderNum) {
+        // เอาเครื่องหมาย # ออก เพื่อให้ AI อ่านเป็นตัวเลขเพียวๆ เช่น "0 0 5"
+        const readNum = currentLatest.replace('#', '').split('').join(' '); 
+        
+        // 💬 ข้อความที่จะให้พูด
+        speakAlert('มีออเดอร์ใหม่เข้ามาค่ะ ออเดอร์ที่ ' + readNum);
+        
+        showToast('🔔 มีออเดอร์ใหม่เข้า: ' + currentLatest);
+      }
+      lastLatestOrderNum = currentLatest;
+    }
+    // 👆 สิ้นสุดระบบเสียงพูด
+
+    renderOrders();
+    updateSummary();
+    const now = new Date();
+    document.getElementById('last-update').textContent =
+      'อัปเดต ' + now.getHours().toString().padStart(2,'0') + ':' +
+      now.getMinutes().toString().padStart(2,'0') + ' น.';
+  } catch(err) { showToast('❌ โหลดออเดอร์ไม่ได้: ' + err.message); }
+  finally { document.getElementById('loading').style.display = 'none'; }
+}
+
+function renderOrders() {
+  const c = document.getElementById('orders-container');
+  const list = activeOrderFilter === 'all' ? allOrders : allOrders.filter(o => o.status === activeOrderFilter);
+  if (!list.length) { c.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div>${activeOrderFilter==='all'?'ยังไม่มีออเดอร์':'ไม่มีออเดอร์สถานะนี้'}</div></div>`; return; }
+  c.innerHTML = list.map(orderCard).join('');
+}
+
+function fmtDate(val) {
+  if (!val || val === '') return '-';
+  // ISO string จาก Sheets เก่า เช่น "2026-05-13T17:00:00.000Z"
+  if (typeof val === 'string' && val.includes('T')) {
+    try {
+      const d = new Date(new Date(val).getTime() + 7 * 3600000);
+      return d.toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' });
+    } catch(e) {}
+  }
+  return String(val); // "13/05/2026" ที่ Apps Script แปลงมาแล้ว
+}
+
+function fmtTime(val) {
+  if (!val || val === '') return '-';
+  // ISO time จาก Sheets เก่า เช่น "1899-12-30T08:49:56.000Z"
+  if (typeof val === 'string' && val.includes('T')) {
+    try {
+      const d = new Date(new Date(val).getTime() + 7 * 3600000);
+      return d.toTimeString().substring(0, 5);
+    } catch(e) {}
+  }
+  return String(val); // "15:49" ที่ Apps Script แปลงมาแล้ว
+}
+
+function orderCard(o) {
+  const typeClass = o.type === 'ส่ง' ? 'type-ส่ง' : 'type-รับหน้าร้าน';
+  const typeIcon  = o.type === 'ส่ง' ? '🛵 ส่ง' : '🏪 รับหน้าร้าน';
+  const note    = o.note    ? `<div class="order-note">📝 ${o.note}</div>` : '';
+  const address = o.address ? `<div class="order-address">📍 ${o.address}</div>` : '';
+  const safeNum = o.orderNum.replace(/'/g, "\\'");
+  return `<div class="order-card">
+    <div class="card-header">
+      <div><div class="order-num">${o.orderNum}</div><div class="order-time">${fmtDate(o.date)} เวลา ${fmtTime(o.time)} น.</div></div>
+      <span class="status-badge badge-${o.status}">${o.status}</span>
+    </div>
+    <div class="card-body">
+      <div class="order-customer">👤 ${o.customerName}<span class="type-tag ${typeClass}">${typeIcon}</span>${o.payment ? `<span class="type-tag" style="background:#f0fdf4;color:#16a34a;">${o.payment}</span>` : ''}</div>
+      <div class="order-items">🍽️ ${o.items}</div>
+      ${note}${address}
+      <div class="order-total">💰 ฿${Number(o.total).toLocaleString()}</div>
+    </div>
+    ${getActions(o.status, safeNum) ? `<div class="card-actions">${getActions(o.status, safeNum)}</div>` : ''}
+  </div>`;
+}
+
+function getActions(status, num) {
+  const isKitchen = document.body.classList.contains('role-kitchen');
+  const editBtn   = isKitchen ? '' : `<button class="action-btn" style="background:#f0fdf4;color:#16a34a;" onclick="openEditOrder('${num}')">✏️ แก้ไข</button>`;
+  const cancelBtn = isKitchen ? '' : `<button class="action-btn btn-cancel" onclick="updateStatus('${num}','ยกเลิก')">❌ ยกเลิก</button>`;
+  const map = {
+    'รอทำ':      `<button class="action-btn btn-confirm" onclick="updateStatus('${num}','รับออเดอร์')">✅ รับออเดอร์</button>${editBtn}${cancelBtn}`,
+    'รับออเดอร์': `<button class="action-btn btn-cooking" onclick="startCooking('${num}')">👨‍🍳 เริ่มทำ</button>${editBtn}${cancelBtn}`,
+    'กำลังทำ':   `<button class="action-btn btn-cooking" onclick="openCookScreen('${num}')">👨‍🍳 ดูรายการ</button><button class="action-btn btn-done" onclick="updateStatus('${num}','เสร็จแล้ว')">🎉 ทำเสร็จ</button>`,
+    'เสร็จแล้ว': isKitchen ? '' : `<button class="action-btn btn-deliver" onclick="updateStatus('${num}','ส่งแล้ว')">🛵 ส่งแล้ว / รับแล้ว</button>`,
+  };
+  return map[status] || '';
+}
+
+// ════════════════════════════════════════
+//  COOKING FULLSCREEN
+// ════════════════════════════════════════
+async function startCooking(orderNum) {
+  await updateStatus(orderNum, 'กำลังทำ');
+  openCookScreen(orderNum);
+}
+
+function openCookScreen(orderNum) {
+  const o = allOrders.find(x => x.orderNum === orderNum);
+  if (!o) return;
+
+  document.getElementById('cook-num').textContent = '👨‍🍳 ' + o.orderNum;
+  document.getElementById('cook-customer').textContent =
+    '👤 ' + o.customerName + '  ' + (o.type === 'ส่ง' ? '🛵 ส่ง' : '🏪 รับหน้าร้าน');
+
+  const items = String(o.items).split(',').map(s => s.trim()).filter(Boolean);
+  document.getElementById('cook-items').innerHTML = items.map(item => {
+    const match = item.match(/^(.+?)\s+x(\d+)(.*)$/);
+    if (match) {
+      const name = match[1].trim();
+      const qty  = match[2];
+      const rest = match[3] ? `<div class="cook-item-addon">${match[3].trim()}</div>` : '';
+      return `<div class="cook-item"><div class="cook-item-qty">x${qty}</div><div><div class="cook-item-name">${name}</div>${rest}</div></div>`;
+    }
+    return `<div class="cook-item"><div class="cook-item-qty">×1</div><div class="cook-item-name">${item}</div></div>`;
+  }).join('');
+
+  const noteWrap = document.getElementById('cook-note-wrap');
+  noteWrap.innerHTML = o.note ? `<div class="cook-note">📝 โน้ต: ${o.note}</div>` : '';
+
+  const safeNum = orderNum.replace(/'/g, "\\'");
+  document.getElementById('cook-done-btn').onclick = async () => {
+    await updateStatus(orderNum, 'เสร็จแล้ว');
+    closeCookScreen();
+  };
+
+  document.getElementById('cook-screen').style.display = 'flex';
+}
+
+function closeCookScreen() {
+  document.getElementById('cook-screen').style.display = 'none';
+}
+
+async function updateStatus(orderNum, newStatus) {
+  showToast('⏳ กำลังอัปเดต...');
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({action:'updateOrderStatus',orderNum,status:newStatus}), redirect:'follow' });
+    const data = JSON.parse(await res.text());
+    if (data.status !== 'success') throw new Error(data.message);
+    const idx = allOrders.findIndex(o => o.orderNum === orderNum);
+    if (idx !== -1) allOrders[idx].status = newStatus;
+    renderOrders(); updateSummary();
+    showToast('✅ ' + newStatus + ' แล้ว');
+  } catch(err) { showToast('❌ ' + err.message); }
+}
+
+function filterOrders(f, btn) {
+  activeOrderFilter = f;
+  document.querySelectorAll('#page-orders .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderOrders();
+}
+
+function updateSummary() {
+  const pending = allOrders.filter(o => o.status === 'รอทำ').length;
+  document.getElementById('cnt-new').textContent   = pending;
+  document.getElementById('cnt-doing').textContent = allOrders.filter(o => o.status==='กำลังทำ'||o.status==='รับออเดอร์').length;
+  document.getElementById('cnt-done').textContent  = allOrders.filter(o => o.status==='เสร็จแล้ว'||o.status==='ส่งแล้ว').length;
+  document.getElementById('cnt-all').textContent   = allOrders.length;
+  const badge = document.getElementById('badge-orders');
+  badge.textContent = pending;
+  badge.style.display = pending > 0 ? 'block' : 'none';
+}
+
+// ════════════════════════════════════════
+//  MENU MANAGEMENT
+// ════════════════════════════════════════
+const EMOJI_MAP = {'ผัด':'🥘','ข้าว':'🍚','ก๋วยเตี๋ยว':'🍜','ต้ม/แกง':'🍲','เครื่องดื่ม':'🥤'};
+
+async function loadMenus() {
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + '?action=adminMenu');
+    const data = await res.json();
+    if (data.status !== 'success') throw new Error(data.message);
+    allMenus = data.items || [];
+    renderMenus();
+  } catch(err) { showToast('❌ โหลดเมนูไม่ได้: ' + err.message); }
+}
+
+function renderMenus() {
+  const c = document.getElementById('menu-container');
+  let list = allMenus;
+  if (activeMenuCat !== 'all') list = list.filter(m => m.category === activeMenuCat);
+  if (menuSearchQ) list = list.filter(m => m.name.includes(menuSearchQ));
+  if (!list.length) { c.innerHTML = `<div class="empty"><div class="empty-icon">🍽️</div><div>ไม่พบเมนู</div></div>`; return; }
+  c.innerHTML = list.map(menuCard).join('');
+}
+
+function menuCard(m) {
+  const emoji = EMOJI_MAP[m.category] || '🍽️';
+  const checked = m.status === 'มี' ? 'checked' : '';
+  return `<div class="menu-item">
+    <div class="menu-emoji">${emoji}</div>
+    <div class="menu-info">
+      <div class="menu-name">${m.name}</div>
+      <div class="menu-cat">${m.category} • ${m.id}</div>
+      <div class="menu-price">฿${m.price}</div>
+    </div>
+    <div class="menu-actions">
+      <label class="toggle" title="${m.status === 'มี' ? 'มีสินค้า' : 'หมด'}">
+        <input type="checkbox" ${checked} onchange="toggleStatus('${m.id}',this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+      <button class="edit-btn" onclick="openEditById('${m.id}')">✏️</button>
+      <button class="del-btn" onclick="deleteMenu('${m.id}','${m.name}')">🗑️</button>
+    </div>
+  </div>`;
+}
+
+async function toggleStatus(menuId, isOn) {
+  const newStatus = isOn ? 'มี' : 'หมด';
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({action:'toggleMenu', menuId, status:newStatus}), redirect:'follow' });
+    const data = JSON.parse(await res.text());
+    if (data.status !== 'success') throw new Error(data.message);
+    const m = allMenus.find(x => x.id === menuId);
+    if (m) m.status = newStatus;
+    showToast((isOn ? '✅ เปิดเมนู: ' : '🔴 ปิดเมนู: ') + (m ? m.name : menuId));
+  } catch(err) { showToast('❌ ' + err.message); loadMenus(); }
+}
+
+async function deleteMenu(menuId, name) {
+  if (!confirm('ลบเมนู "' + name + '" ใช่ไหม?')) return;
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({action:'deleteMenu', menuId}), redirect:'follow' });
+    const data = JSON.parse(await res.text());
+    if (data.status !== 'success') throw new Error(data.message);
+    allMenus = allMenus.filter(m => m.id !== menuId);
+    renderMenus();
+    showToast('🗑️ ลบเมนูแล้ว: ' + name);
+  } catch(err) { showToast('❌ ' + err.message); }
+}
+
+function filterMenuCat(cat, btn) {
+  activeMenuCat = cat;
+  document.querySelectorAll('#page-menu .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderMenus();
+}
+
+function filterMenu(q) { menuSearchQ = q; renderMenus(); }
+
+// ════════════════════════════════════════
+//  MODAL: ADD / EDIT MENU
+// ════════════════════════════════════════
+function openAddModal() {
+  document.getElementById('modal-title').textContent = '➕ เพิ่มเมนูใหม่';
+  document.getElementById('edit-row').value = '';
+  document.getElementById('f-name').value   = '';
+  document.getElementById('f-cat').value    = 'ผัด';
+  document.getElementById('f-price').value  = '';
+  document.getElementById('f-cost').value   = '';
+  document.getElementById('f-addons').value = '';
+  document.getElementById('f-status').value = 'มี';
+  document.getElementById('menu-modal').classList.add('open');
+}
+
+function openEditById(menuId) {
+  const m = allMenus.find(x => x.id === menuId);
+  if (m) openEditModal(m);
+}
+
+function openEditModal(m) {
+  document.getElementById('modal-title').textContent = '✏️ แก้ไขเมนู';
+  document.getElementById('edit-row').value  = m.id;
+  document.getElementById('f-name').value    = m.name;
+  document.getElementById('f-cat').value     = m.category;
+  document.getElementById('f-price').value   = m.price;
+  document.getElementById('f-cost').value    = m.cost || '';
+  const addonsVal = Array.isArray(m.addons) ? m.addons.join(', ') : (m.addons || '');
+  document.getElementById('f-addons').value  = addonsVal;
+  document.getElementById('f-status').value  = m.status;
+  document.getElementById('menu-modal').classList.add('open');
+}
+
+function closeMenuModal() { document.getElementById('menu-modal').classList.remove('open'); }
+function closeModal(e) { if (e.target === document.getElementById('menu-modal')) closeMenuModal(); }
+
+async function saveMenu() {
+  const name   = document.getElementById('f-name').value.trim();
+  const cat    = document.getElementById('f-cat').value;
+  const price  = Number(document.getElementById('f-price').value);
+  const cost   = Number(document.getElementById('f-cost').value) || 0;
+  const addons = document.getElementById('f-addons').value.trim();
+  const status = document.getElementById('f-status').value;
+  const editId = document.getElementById('edit-row').value;
+
+  if (!name || !price) { showToast('❌ กรุณากรอกชื่อและราคา'); return; }
+
+  const action = editId ? 'updateMenu' : 'addMenu';
+  const payload = { action, name, category: cat, price, cost, addons, status };
+  if (editId) payload.menuId = editId;
+
+  showToast('⏳ กำลังบันทึก...');
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload), redirect:'follow' });
+    const data = JSON.parse(await res.text());
+    if (data.status !== 'success') throw new Error(data.message);
+    closeMenuModal();
+    await loadMenus();
+    showToast(editId ? '✅ แก้ไขเมนูแล้ว' : '✅ เพิ่มเมนูแล้ว: ' + name);
+  } catch(err) { showToast('❌ ' + err.message); }
+}
+
+// ════════════════════════════════════════
+//  TOAST & AUTO REFRESH
+// ════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ════════════════════════════════════════
+//  EDIT ORDER
+// ════════════════════════════════════════
+let editOrderNum  = '';
+let editItems     = []; // [{name, qty, addon, unitPrice}]
+let pickerFilter  = '';
+
+// แยก items string โดยไม่ตัดคอมม่าภายใน (...addon...)
+function splitOrderItems(str) {
+  const items = [];
+  let depth = 0, cur = '';
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i];
+    if (ch === '(') depth++;
+    else if (ch === ')') depth--;
+    if (ch === ',' && depth === 0) {
+      if (cur.trim()) items.push(cur.trim());
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  if (cur.trim()) items.push(cur.trim());
+  return items;
+}
+
+async function openEditOrder(orderNum) {
+  const o = allOrders.find(x => x.orderNum === orderNum);
+  if (!o) return;
+  editOrderNum = orderNum;
+
+  // โหลดเมนูก่อนถ้ายังว่างอยู่ (เพื่อให้รู้ราคา)
+  if (allMenus.length === 0) {
+    showToast('⏳ โหลดราคาเมนู...');
+    await loadMenus();
+  }
+
+  // parse items string — ใช้ splitOrderItems เพื่อไม่ตัด addon ที่มีคอมม่า
+  const parts = splitOrderItems(String(o.items || ''));
+  editItems = parts.map(part => {
+    const isCustom = part.includes('[?]');
+
+    // ดึง embedded price tag [฿XX] ถ้ามี
+    const priceTagM  = part.match(/\[฿(\d+(?:\.\d+)?)\]/);
+    const embeddedPrice = priceTagM ? parseFloat(priceTagM[1]) : null;
+
+    // ลบ [?] และ [฿XX] ออกก่อน parse ชื่อ
+    const cleaned = part.replace('[?]', '').replace(/\[฿[\d.]+\]/g, '').trim();
+
+    const m = cleaned.match(/^(.+?)\s+x(\d+)\s*(?:\(\+([^)]+)\))?$/i);
+    if (!m) return { name: cleaned, qty: 1, addon: '', unitPrice: embeddedPrice ?? 0, isCustom };
+
+    const name  = m[1].trim();
+    const qty   = parseInt(m[2]) || 1;
+    const addon = m[3] ? m[3].trim() : '';
+
+    // ลำดับความสำคัญราคา: embedded tag → allMenus → 0
+    const nameLow = name.toLowerCase().trim();
+    const mi = allMenus.find(x => x.name === name)
+            || allMenus.find(x => x.name.toLowerCase().trim() === nameLow);
+    const price = embeddedPrice !== null
+      ? embeddedPrice
+      : (isCustom ? 0 : (mi ? (parseFloat(mi.price) || 0) : 0));
+
+    return { name, qty, addon, unitPrice: price, isCustom };
+  });
+
+  document.getElementById('edit-order-title').textContent = 'แก้ไข ' + orderNum;
+  renderEditItems();
+  document.getElementById('edit-order-sheet').classList.add('open');
+  document.getElementById('edit-overlay').classList.add('open');
+}
+
+function closeEditOrder() {
+  document.getElementById('edit-order-sheet').classList.remove('open');
+  document.getElementById('edit-overlay').classList.remove('open');
+  closeMenuPicker();
+}
+
+function renderEditItems() {
+  const total = editItems.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+  document.getElementById('edit-total').textContent = '฿' + total.toLocaleString();
+
+  const body = document.getElementById('edit-items-body');
+  if (!editItems.length) {
+    body.innerHTML = '<div class="edit-empty">ยังไม่มีรายการ — กดเพิ่มเมนูด้านล่าง</div>';
+    return;
+  }
+  body.innerHTML = editItems.map((item, idx) => {
+    if (item.isCustom) {
+      // รายการพิเศษ — ชื่อแก้ไขได้ + ใส่ราคาได้
+      return `
+      <div class="edit-item-row" style="flex-wrap:wrap;gap:6px;">
+        <div class="edit-item-info" style="width:100%;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="font-size:11px;color:#7c3aed;font-weight:700;white-space:nowrap;">⭐ พิเศษ</span>
+            <input type="text" style="flex:1;border:1.5px solid #c4b5fd;border-radius:8px;padding:5px 10px;font-family:inherit;font-size:13px;font-weight:700;"
+              placeholder="ชื่อรายการพิเศษ..."
+              value="${item.name.replace(/"/g,'&quot;')}"
+              oninput="setCustomName(${idx}, this.value)">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;">ราคา/จาน:</span>
+            <input type="number" min="0" step="5"
+              style="width:90px;border:1px solid #c4b5fd;border-radius:6px;padding:4px 8px;font-family:inherit;font-size:13px;font-weight:700;"
+              placeholder="฿0"
+              value="${item.unitPrice > 0 ? item.unitPrice : ''}"
+              oninput="setCustomPrice(${idx}, this.value)">
+            <span style="font-size:12px;color:var(--text2);">${item.unitPrice > 0 ? '× ' + item.qty + ' = ฿' + (item.unitPrice * item.qty) : ''}</span>
+            <button class="qty-ctrl-btn" onclick="changeEditQty(${idx},-1)" style="margin-left:auto;">−</button>
+            <span class="qty-ctrl-num">${item.qty}</span>
+            <button class="qty-ctrl-btn" onclick="changeEditQty(${idx},1)">+</button>
+            <button class="del-item-btn" onclick="removeEditItem(${idx})">🗑</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    const priceRow = `<div class="edit-item-price">${item.unitPrice > 0 ? '฿' + item.unitPrice + ' × ' + item.qty + ' = ฿' + (item.unitPrice * item.qty) : 'ไม่ทราบราคา'}</div>`;
+    return `
+    <div class="edit-item-row">
+      <div class="edit-item-info">
+        <div class="edit-item-name">${item.name}${item.addon ? ` <span class="edit-addon-tag">(+${item.addon})</span>` : ''}</div>
+        ${priceRow}
+      </div>
+      <div class="edit-item-controls">
+        <button class="qty-ctrl-btn" onclick="changeEditQty(${idx},-1)">−</button>
+        <span class="qty-ctrl-num">${item.qty}</span>
+        <button class="qty-ctrl-btn" onclick="changeEditQty(${idx},1)">+</button>
+        <button class="del-item-btn" onclick="removeEditItem(${idx})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setCustomName(idx, val) {
+  editItems[idx].name = val;
+}
+
+function setCustomPrice(idx, val) {
+  editItems[idx].unitPrice = parseFloat(val) || 0;
+  const total = editItems.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+  document.getElementById('edit-total').textContent = '฿' + total.toLocaleString();
+}
+
+function addCustomEditItem() {
+  editItems.push({ name: '', qty: 1, addon: '', unitPrice: 0, isCustom: true });
+  renderEditItems();
+  // เลื่อนลงไปที่รายการใหม่
+  const body = document.getElementById('edit-items-body');
+  body.scrollTop = body.scrollHeight;
+}
+
+function changeEditQty(idx, delta) {
+  editItems[idx].qty = Math.max(1, editItems[idx].qty + delta);
+  renderEditItems();
+}
+
+function removeEditItem(idx) {
+  if (!confirm('ลบ "' + editItems[idx].name + '" ออกจากออเดอร์?')) return;
+  editItems.splice(idx, 1);
+  renderEditItems();
+}
+
+// ── Menu Picker ──
+function openMenuPicker() {
+  pickerFilter = '';
+  document.querySelector('.picker-search-input').value = '';
+  renderPickerList('');
+  document.getElementById('menu-picker').classList.add('open');
+}
+
+function closeMenuPicker() {
+  document.getElementById('menu-picker').classList.remove('open');
+}
+
+function filterPickerMenu(q) {
+  pickerFilter = q.toLowerCase();
+  renderPickerList(pickerFilter);
+}
+
+function renderPickerList(q) {
+  const active = allMenus.filter(m => {
+    const s = m.status || '';
+    return s !== 'ปิด' && s !== 'หมด';
+  });
+  const filtered = q ? active.filter(m => m.name.toLowerCase().includes(q)) : active;
+  document.getElementById('menu-picker-list').innerHTML = filtered.length
+    ? filtered.map(m => `
+      <div class="picker-item" onclick="addMenuToEdit('${m.id}')">
+        <div>
+          <div class="picker-item-name">${m.name}</div>
+          <div class="picker-item-cat">${m.category || ''}</div>
+        </div>
+        <div class="picker-item-price">฿${m.price}</div>
+      </div>`).join('')
+    : '<div class="edit-empty">ไม่พบเมนูที่ค้นหา</div>';
+}
+
+function addMenuToEdit(menuId) {
+  const m = allMenus.find(x => x.id === menuId);
+  if (!m) return;
+  const existing = editItems.find(i => i.name === m.name && !i.addon);
+  if (existing) {
+    existing.qty++;
+  } else {
+    editItems.push({ name: m.name, qty: 1, addon: '', unitPrice: parseFloat(m.price) || 0 });
+  }
+  closeMenuPicker();
+  renderEditItems();
+}
+
+async function saveEditOrder() {
+  if (!editItems.length) { showToast('❌ กรุณาเพิ่มรายการอย่างน้อย 1 รายการ'); return; }
+
+  // ตรวจสอบรายการพิเศษที่ยังไม่ได้ใส่ราคา
+  const unpricedCustom = editItems.filter(i => i.isCustom && i.unitPrice <= 0);
+  if (unpricedCustom.length > 0) {
+    const names = unpricedCustom.map(i => '"' + i.name + '"').join(', ');
+    if (!confirm('รายการ ' + names + ' ยังไม่ได้ระบุราคา\nต้องการบันทึกโดยไม่ระบุราคาหรือไม่?')) return;
+  }
+
+  // format items text — ฝัง [฿XX] สำหรับรายการที่ไม่อยู่ในเมนู เพื่อไม่ให้ราคาหาย
+  const itemsText  = editItems.map(i => {
+    const addon   = i.addon ? ` (+${i.addon})` : '';
+    const nameLow = i.name.toLowerCase().trim();
+    const inMenu  = allMenus.find(m => m.name === i.name
+                 || m.name.toLowerCase().trim() === nameLow);
+    if (i.isCustom && i.unitPrice <= 0) {
+      return `${i.name} x${i.qty}${addon} [?]`;           // ราคายังไม่ระบุ
+    } else if (!inMenu && i.unitPrice > 0) {
+      return `${i.name} x${i.qty}${addon} [฿${i.unitPrice}]`; // ฝังราคาไว้เลย
+    } else if (i.isCustom && i.unitPrice > 0) {
+      return `${i.name} x${i.qty}${addon} [฿${i.unitPrice}]`; // custom มีราคาแล้ว
+    } else {
+      return `${i.name} x${i.qty}${addon}`;               // เมนูปกติ lookup จาก Sheet
+    }
+  }).join(', ');
+  const addonsText = editItems.filter(i => i.addon).map(i => i.addon).join(', ');
+  const total      = editItems.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+
+  // ตรวจว่ามีรายการพิเศษที่ระบุราคาครบแล้วหรือไม่ → จะถามส่ง LINE ลูกค้า
+  const hasCustomPriced = editItems.some(i => i.isCustom && i.unitPrice > 0);
+  const order = allOrders.find(o => o.orderNum === editOrderNum);
+  const lineUserId = order ? (order.lineUserId || '') : '';
+
+  // ถามก่อนว่าจะส่งแจ้งยอดให้ลูกค้าไหม
+  let sendNotify = false;
+  if (hasCustomPriced && lineUserId && unpricedCustom.length === 0) {
+    sendNotify = confirm(`ส่งยอดรวม ฿${total.toLocaleString()} ให้ลูกค้าทาง LINE ไหม?\n(เฉพาะรายการพิเศษที่ระบุราคาแล้ว)`);
+  }
+
+  showToast('⏳ กำลังบันทึก...');
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'updateOrderItems', orderNum: editOrderNum, items: itemsText, addons: addonsText, total, sendNotify, lineUserId }),
+      redirect: 'follow'
+    });
+    const data = JSON.parse(await res.text());
+    if (data.status !== 'success') throw new Error(data.message);
+
+    const idx = allOrders.findIndex(o => o.orderNum === editOrderNum);
+    if (idx !== -1) {
+      allOrders[idx].items  = itemsText;
+      allOrders[idx].addons = addonsText;
+      allOrders[idx].total  = total;
+    }
+    closeEditOrder();
+    renderOrders();
+    showToast(sendNotify ? '✅ บันทึกแล้ว + ส่ง LINE ลูกค้าแล้ว' : '✅ แก้ไขออเดอร์ #' + editOrderNum + ' แล้ว');
+  } catch(e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+// ════════════════════════════════════════
+//  REPORT
+// ════════════════════════════════════════
+
+function toLocalDateStr(d) {
+  // แปลง Date → "YYYY-MM-DD" ด้วย timezone +7
+  if (!d) return '';
+  const bkk = new Date(d.getTime ? d.getTime() + 7*3600000 : new Date(d).getTime() + 7*3600000);
+  return bkk.toISOString().slice(0,10);
+}
+
+// ════════════════════════════════════════
+//  INGREDIENT MANAGEMENT
+// ════════════════════════════════════════
+
+let allIngredients = [];
+
+async function loadIngredients() {
+  document.getElementById('ingredient-list').innerHTML =
+    '<div style="grid-column:1/-1;text-align:center;color:#888;padding:20px;">กำลังโหลด...</div>';
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + '?action=ingredients');
+    const data = await res.json();
+    allIngredients = data.items || [];
+    renderIngredients();
+  } catch(e) {
+    document.getElementById('ingredient-list').innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;color:#e53e3e;padding:20px;">โหลดข้อมูลไม่สำเร็จ</div>';
+  }
+}
+
+function renderIngredients() {
+  const el = document.getElementById('ingredient-list');
+  if (!allIngredients.length) {
+    el.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#888;padding:20px;">ไม่พบข้อมูลวัตถุดิบ</div>';
+    return;
+  }
+  el.innerHTML = allIngredients.map(ing => {
+    const isOut = ing.status === 'หมด';
+    return `
+    <div style="background:white;border-radius:12px;border:2px solid ${isOut ? '#fc8181' : '#9ae6b4'};padding:14px;text-align:center;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px;color:#2d3748;">${ing.name}</div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px;">${ing.unit || ''}</div>
+      <div style="display:flex;gap:6px;justify-content:center;">
+        <button onclick="setIngredient('${ing.id}','มี')"
+          style="flex:1;padding:7px 4px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:600;
+                 background:${!isOut ? '#38a169' : '#e2e8f0'};color:${!isOut ? 'white' : '#888'};">
+          ✅ มี
+        </button>
+        <button onclick="setIngredient('${ing.id}','หมด')"
+          style="flex:1;padding:7px 4px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:600;
+                 background:${isOut ? '#e53e3e' : '#e2e8f0'};color:${isOut ? 'white' : '#888'};">
+          ❌ หมด
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function setIngredient(id, newStatus) {
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST', headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({ action: 'toggleIngredient', id, status: newStatus }),
+      redirect: 'follow'
+    });
+    const data = JSON.parse(await res.text());
+    if (data.status === 'success') {
+      const ing = allIngredients.find(i => i.id === id);
+      if (ing) { ing.status = newStatus; renderIngredients(); }
+    }
+  } catch(e) { alert('เกิดข้อผิดพลาด'); }
+}
+
+function initReport() {
+  const from = document.getElementById('rpt-from');
+  const to   = document.getElementById('rpt-to');
+  if (!from.value) {
+    // default: เดือนนี้
+    const now = new Date();
+    const y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0');
+    from.value = `${y}-${m}-01`;
+    to.value   = toLocalDateStr(now);
+  }
+  renderReport();
+}
+
+function setQuick(range) {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  let f, t;
+  if (range === 'today') {
+    f = t = toLocalDateStr(now);
+  } else if (range === 'yesterday') {
+    const y = new Date(now); y.setDate(y.getDate()-1);
+    f = t = toLocalDateStr(y);
+  } else if (range === 'week') {
+    const w = new Date(now); w.setDate(w.getDate()-6);
+    f = toLocalDateStr(w); t = toLocalDateStr(now);
+  } else if (range === 'month') {
+    const y = now.getFullYear(), m = pad(now.getMonth()+1);
+    f = `${y}-${m}-01`; t = toLocalDateStr(now);
+  } else if (range === 'lastmonth') {
+    const d1 = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const d2 = new Date(now.getFullYear(), now.getMonth(), 0);
+    f = toLocalDateStr(d1); t = toLocalDateStr(d2);
+  }
+  document.getElementById('rpt-from').value = f;
+  document.getElementById('rpt-to').value   = t;
+  renderReport();
+}
+
+function parseOrderDate(str) {
+  if (!str) return null;
+  // รูปแบบ dd/MM/yyyy จาก Google Sheet
+  const m = String(str).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return new Date(`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}T12:00:00+07:00`);
+  // รูปแบบ ISO หรืออื่นๆ
+  return new Date(str);
+}
+
+function renderReport() {
+  const fromVal = document.getElementById('rpt-from').value;
+  const toVal   = document.getElementById('rpt-to').value;
+  if (!fromVal || !toVal) return;
+
+  const fromD = new Date(fromVal + 'T00:00:00+07:00');
+  const toD   = new Date(toVal   + 'T23:59:59+07:00');
+
+  // กรองออเดอร์ที่อยู่ในช่วงวันที่ และยกเว้นที่ยกเลิก
+  const filtered = allOrders.filter(o => {
+    if (!o.date) return false;
+    const od = parseOrderDate(o.date);
+    return od && od >= fromD && od <= toD && o.status !== 'ยกเลิก';
+  });
+
+  // ── KPI ──
+  const totalSales  = filtered.reduce((s,o) => s + (parseFloat(o.total)||0), 0);
+  const totalCount  = filtered.length;
+  const pickupCount = filtered.filter(o => String(o.type||'').includes('รับ')).length;
+  const delivCount  = filtered.filter(o => String(o.type||'').includes('ส่ง')).length;
+
+  document.getElementById('rpt-total').textContent    = '฿' + totalSales.toLocaleString();
+  document.getElementById('rpt-count').textContent    = totalCount;
+  document.getElementById('rpt-pickup').textContent   = pickupCount;
+  document.getElementById('rpt-delivery').textContent = delivCount;
+
+  // ── ยอดแต่ละวัน ──
+  const byDay = {};
+  filtered.forEach(o => {
+    const d = toLocalDateStr(parseOrderDate(o.date));
+    if (!byDay[d]) byDay[d] = { total:0, count:0 };
+    byDay[d].total += parseFloat(o.total)||0;
+    byDay[d].count++;
+  });
+  const dayKeys = Object.keys(byDay).sort((a,b) => b.localeCompare(a));
+  const dailyEl = document.getElementById('rpt-daily-body');
+  if (dayKeys.length === 0) {
+    dailyEl.innerHTML = '<div class="report-empty">ไม่มีข้อมูลในช่วงนี้</div>';
+  } else {
+    dailyEl.innerHTML = `<table class="report-table">
+      <thead><tr><th>วันที่</th><th>ออเดอร์</th><th>ยอด</th></tr></thead>
+      <tbody>
+        ${dayKeys.map(d => {
+          const dd = new Date(d+'T00:00:00+07:00');
+          const dStr = dd.toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'2-digit'});
+          return `<tr>
+            <td>${dStr}</td>
+            <td class="num">${byDay[d].count}</td>
+            <td class="num" style="color:var(--green)">฿${byDay[d].total.toLocaleString()}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  // ── เมนูขายดี ──
+  const menuCount = {};
+  filtered.forEach(o => {
+    const items = String(o.items||'').split('\n');
+    items.forEach(line => {
+      const m = line.match(/^x?(\d+)\s+(.+?)(\s+฿\d+)?$/);
+      if (m) {
+        const name = m[2].trim();
+        const qty  = parseInt(m[1])||1;
+        menuCount[name] = (menuCount[name]||0) + qty;
+      }
+    });
+  });
+  const topMenus = Object.entries(menuCount).sort((a,b) => b[1]-a[1]).slice(0,10);
+  const maxMenu  = topMenus[0]?.[1] || 1;
+  const menuEl   = document.getElementById('rpt-menu-body');
+  if (topMenus.length === 0) {
+    menuEl.innerHTML = '<div class="report-empty">ไม่มีข้อมูลในช่วงนี้</div>';
+  } else {
+    menuEl.innerHTML = topMenus.map(([name, cnt]) => `
+      <div class="report-bar-wrap">
+        <div class="report-bar-label">${name}</div>
+        <div class="report-bar-bg"><div class="report-bar-fill" style="width:${Math.round(cnt/maxMenu*100)}%"></div></div>
+        <div class="report-bar-val">${cnt} ครั้ง</div>
+      </div>`).join('');
+  }
+
+  // ── ช่องทาง ──
+  const chanMap = {};
+  filtered.forEach(o => {
+    const ch = o.channel || 'ไม่ระบุ';
+    chanMap[ch] = (chanMap[ch]||0)+1;
+  });
+  const chanEntries = Object.entries(chanMap).sort((a,b)=>b[1]-a[1]);
+  const maxChan = chanEntries[0]?.[1]||1;
+  const chanEl  = document.getElementById('rpt-channel-body');
+  chanEl.innerHTML = chanEntries.length === 0
+    ? '<div class="report-empty">ไม่มีข้อมูล</div>'
+    : chanEntries.map(([ch,cnt]) => `
+      <div class="report-bar-wrap">
+        <div class="report-bar-label">${ch}</div>
+        <div class="report-bar-bg"><div class="report-bar-fill" style="width:${Math.round(cnt/maxChan*100)}%;background:var(--orange)"></div></div>
+        <div class="report-bar-val">${cnt}</div>
+      </div>`).join('');
+
+  // ── วิธีชำระเงิน ──
+  const payMap = {};
+  filtered.forEach(o => {
+    const p = o.payment || 'ไม่ระบุ';
+    payMap[p] = (payMap[p]||0)+1;
+  });
+  const payEntries = Object.entries(payMap).sort((a,b)=>b[1]-a[1]);
+  const maxPay = payEntries[0]?.[1]||1;
+  const payEl  = document.getElementById('rpt-payment-body');
+  payEl.innerHTML = payEntries.length === 0
+    ? '<div class="report-empty">ไม่มีข้อมูล</div>'
+    : payEntries.map(([p,cnt]) => `
+      <div class="report-bar-wrap">
+        <div class="report-bar-label">${p}</div>
+        <div class="report-bar-bg"><div class="report-bar-fill" style="width:${Math.round(cnt/maxPay*100)}%;background:var(--green)"></div></div>
+        <div class="report-bar-val">${cnt}</div>
+      </div>`).join('');
+}
+</script>
+</body>
+</html>
