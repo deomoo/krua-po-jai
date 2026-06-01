@@ -384,24 +384,15 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw-_hcz2P3IXtrJ
 const EMOJI_MAP = {
   'ผัด':'🥘','ข้าว':'🍛','ก๋วยเตี๋ยว':'🍜','ต้ม/แกง':'🍲','เครื่องดื่ม':'🧋'
 };
-// ราคา add-on ตามชื่อ — ตรงกับตาราง Add-ons ใน Sheet
-const ADDON_PRICES = {
-  'พิเศษ':10,       // ADD-01
-  'ไข่ดาว':10,      // ADD-02
-  'เพิ่มไข่ดาว':10, // ชื่อสำรอง
-  'ไข่ขัน':10,      // ADD-03
-  'ไข่เจียว':10,    // ADD-04
-  'เพิ่มเส้น':10,   // ADD-05
-  'เส้นพิเศษ':10,   // ชื่อสำรอง
-  'ตีนไก่':5,       // ADD-06
-  'หมูสับ':10,      // ADD-07
-  'พิเศษ+':50,      // ADD-08
-  'ไม่เผ็ด':0,      // ADD-09
-  'ไม่ใส่ผัก':0,    // ADD-10
-  'ไม่ใส่ผักชี':0,  // ชื่อสำรอง
+// ราคา add-on fallback (ใช้เมื่อโหลดจาก Sheet ไม่ได้)
+const ADDON_PRICES_FALLBACK = {
+  'พิเศษ':10,'ไข่ดาว':10,'ไข่ขัน':10,'ไข่เจียว':10,
+  'เพิ่มเส้น':10,'ตีนไก่':5,'หมูสับ':10,'พิเศษ+':50,
+  'ไม่เค็ด':0,'ไม่ใส่ผัก':0,'น้ำยา':10,'น้ำแจ่ว':0,
 };
 
 let menuItems    = [];
+let allAddons    = []; // ดึงจาก Sheet — [{id,name,price,status,note}]
 let cart         = [];
 let customItems  = []; // รายการพิเศษนอกเมนู
 let currentCat   = 'all';
@@ -432,17 +423,26 @@ async function initApp() {
   document.getElementById('loading').style.display = 'none';
 }
 
-// ── Load Menu from Apps Script ──
+// ── Load Menu + Add-ons from Apps Script ──
 async function loadMenu() {
   try {
-    const res  = await fetch(APPS_SCRIPT_URL + '?action=menu');
-    const data = await res.json();
-    if (data.status === 'success') {
-      menuItems = data.items;
-    }
+    const [menuRes, addonsRes] = await Promise.all([
+      fetch(APPS_SCRIPT_URL + '?action=menu'),
+      fetch(APPS_SCRIPT_URL + '?action=addons')
+    ]);
+    const menuData   = await menuRes.json();
+    const addonsData = await addonsRes.json();
+    if (menuData.status === 'success')   menuItems = menuData.items || [];
+    if (addonsData.status === 'success') allAddons = addonsData.addons || [];
   } catch(e) {
-    // Fallback: hardcoded menu (ใช้ตอนทดสอบ offline)
-    menuItems = FALLBACK_MENU;
+    menuItems = FALLBACK_MENU || [];
+  }
+  // fallback ถ้าโหลด addons ไม่ได้
+  if (allAddons.length === 0) {
+    allAddons = Object.entries(ADDON_PRICES_FALLBACK).map(([name, price], i) => ({
+      id: 'ADD-' + String(i+1).padStart(2,'0'),
+      name, price, status: 'เปิด', note: ''
+    }));
   }
   renderMenu();
 }
@@ -498,18 +498,18 @@ function openAddon(id) {
   addonQty  = 1;
   document.getElementById('addon-title').textContent = pendingItem.name;
 
-  const addonsForItem = pendingItem.addons || [];
+  // ดึง add-ons จาก Sheet (เฉพาะที่สถานะ "เปิด")
+  const availableAddons = allAddons.filter(a => a.status === 'เปิด');
   const grid = document.getElementById('addon-grid');
-  if (addonsForItem.length === 0) {
+  if (availableAddons.length === 0) {
     grid.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;grid-column:1/-1;">ไม่มี Add-ons</div>';
   } else {
-    // แสดงทุก add-on จาก Sheet ตรงๆ ไม่ต้อง filter จาก hardcoded list
-    grid.innerHTML = addonsForItem.map((name, i) => {
-      const price = ADDON_PRICES[name] !== undefined ? ADDON_PRICES[name] : 0;
-      const uid   = 'ao_' + i;
-      return `<div class="addon-chip" id="ac-${uid}" onclick="toggleAddon('${uid}','${name}',${price})">
-        ${name}
-        <div class="ap">${price > 0 ? '+฿'+price : 'ฟรี'}</div>
+    grid.innerHTML = availableAddons.map((addon, i) => {
+      const uid = 'ao_' + i;
+      return `<div class="addon-chip" id="ac-${uid}" onclick="toggleAddon('${uid}','${addon.name}',${addon.price})">
+        ${addon.name}
+        ${addon.note ? `<div style="font-size:10px;color:#94a3b8;">${addon.note}</div>` : ''}
+        <div class="ap">${addon.price > 0 ? '+฿'+addon.price : 'ฟรี'}</div>
       </div>`;
     }).join('');
   }
