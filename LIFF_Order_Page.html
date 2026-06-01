@@ -124,6 +124,8 @@ img{display:block;max-width:100%;}
   text-align:center;cursor:pointer;font-size:13px;font-weight:600;
   transition:all .15s;font-family:inherit;}
 .addon-chip.on{border-color:var(--blue);background:#eff6ff;color:var(--blue);}
+.addon-chip.addon-unpriced{border-color:#fde68a;background:#fffbeb;}
+.addon-chip.addon-unpriced.on{border-color:#f59e0b;background:#fef3c7;color:#92400e;}
 .addon-chip .ap{font-size:11px;color:var(--orange);margin-top:2px;font-weight:700;}
 
 .qty-row{display:flex;align-items:center;justify-content:space-between;
@@ -498,19 +500,29 @@ function openAddon(id) {
   addonQty  = 1;
   document.getElementById('addon-title').textContent = pendingItem.name;
 
-  // ดึง add-ons จาก Sheet (เฉพาะที่สถานะ "เปิด")
-  const availableAddons = allAddons.filter(a => a.status === 'เปิด');
+  // ดึง add-ons ที่กำหนดไว้ในเมนูนี้ → เอาราคาจากตาราง allAddons (ตั้งค่า)
+  const itemAddonNames = pendingItem.addons || [];
   const grid = document.getElementById('addon-grid');
-  if (availableAddons.length === 0) {
+  if (itemAddonNames.length === 0) {
     grid.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;grid-column:1/-1;">ไม่มี Add-ons</div>';
   } else {
-    grid.innerHTML = availableAddons.map((addon, i) => {
-      const uid = 'ao_' + i;
-      return `<div class="addon-chip" id="ac-${uid}" onclick="toggleAddon('${uid}','${addon.name}',${addon.price})">
-        ${addon.name}
-        ${addon.note ? `<div style="font-size:10px;color:#94a3b8;">${addon.note}</div>` : ''}
-        <div class="ap">${addon.price > 0 ? '+฿'+addon.price : 'ฟรี'}</div>
-      </div>`;
+    grid.innerHTML = itemAddonNames.map((name, i) => {
+      const addonDef = allAddons.find(a => a.name === name && a.status === 'เปิด');
+      const price    = addonDef ? addonDef.price : null; // null = ไม่พบราคา
+      const uid      = 'ao_' + i;
+      if (price !== null) {
+        // มีราคาในตาราง ตั้งค่า Add-ons
+        return `<div class="addon-chip" id="ac-${uid}" onclick="toggleAddon('${uid}','${name}',${price})">
+          ${name}
+          <div class="ap">${price > 0 ? '+฿'+price : 'ฟรี'}</div>
+        </div>`;
+      } else {
+        // ไม่มีราคาในตาราง → แจ้งราคาภายหลัง (price=0 แต่ทำ flag)
+        return `<div class="addon-chip addon-unpriced" id="ac-${uid}" onclick="toggleAddon('${uid}','${name}',0)">
+          ${name}
+          <div class="ap" style="color:#d97706;">แจ้งราคาภายหลัง</div>
+        </div>`;
+      }
     }).join('');
   }
   updateAddonPrice();
