@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>รายงานเงินสดรับ-จ่าย — ครัวพอใจตามสั่ง</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'TH Sarabun New', 'Sarabun', 'Angsana New', serif;
+  font-size: 16px;
+  background: #f0f0f0;
+  padding: 20px;
+}
+
+/* ── Control Bar ── */
+.control-bar {
+  background: white;
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  width: 210mm;
+  margin-left: auto;
+  margin-right: auto;
+}
+.control-bar label { font-weight: bold; white-space: nowrap; }
+.control-bar select, .control-bar input[type=number] {
+  font-family: inherit; font-size: 15px;
+  border: 1px solid #ccc; border-radius: 6px;
+  padding: 5px 10px; background: #fafafa;
+}
+.btn {
+  padding: 7px 20px; font-size: 15px; font-family: inherit;
+  border: none; border-radius: 6px; cursor: pointer; white-space: nowrap;
+}
+.btn-load   { background: #1565c0; color: white; }
+.btn-load:hover { background: #0d47a1; }
+.btn-print  { background: #2e7d32; color: white; }
+.btn-print:hover { background: #1b5e20; }
+#statusMsg { font-size: 14px; color: #666; }
+
+/* ── Page ── */
+.page {
+  background: white;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: 18mm 18mm 14mm 22mm;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+h1 { text-align: center; font-size: 22px; font-weight: bold; margin-bottom: 14px; text-decoration: underline; }
+
+.info-row { display: flex; gap: 12px; margin-bottom: 6px; font-size: 15px; flex-wrap: wrap; align-items: baseline; }
+.info-label { white-space: nowrap; font-weight: bold; }
+.info-val { border-bottom: 1px dotted #555; min-width: 100px; flex: 1; }
+
+table {
+  width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 15px;
+}
+th, td { border: 1px solid #333; padding: 4px 6px; text-align: center; }
+th { font-weight: bold; background: #fff; }
+td.left { text-align: left; }
+td.right { text-align: right; }
+
+tr.subtotal-row td { background: #f5f5f5; font-style: italic; }
+tr.total-row td { font-weight: bold; background: #fffde7; }
+tr.income-row td { background: #f1f8e9; }
+tr.expense-row td { background: #fce4ec; }
+
+.col-date  { width: 14%; }
+.col-item  { width: 30%; }
+.col-inc   { width: 13%; }
+.col-buy   { width: 13%; }
+.col-other { width: 13%; }
+.col-note  { width: 17%; }
+
+/* ── Summary ── */
+.summary { margin-top: 22px; font-size: 15px; page-break-inside: avoid; }
+.summary h2 { font-size: 16px; font-weight: bold; text-decoration: underline; margin-bottom: 10px; }
+.sum-grid {
+  display: grid;
+  grid-template-columns: 90px 160px 1fr 130px;
+  row-gap: 5px; padding-left: 30px; align-items: baseline;
+}
+.sum-grid .r { text-align: right; }
+.sum-grid .ul { border-bottom: 1px solid #333; }
+.sum-grid .dul { border-bottom: 3px double #333; font-weight: bold; }
+.profit-pos { color: #1b5e20; }
+.profit-neg { color: #b71c1c; }
+
+/* ── Signature ── */
+.sign-row {
+  display: flex; justify-content: flex-end;
+  margin-top: 30px; font-size: 15px;
+}
+.sign-box { text-align: center; }
+.sign-line { border-bottom: 1px solid #555; width: 180px; margin-bottom: 4px; height: 28px; }
+
+/* ── Print ── */
+@media print {
+  body { background: white; padding: 0; }
+  .control-bar { display: none !important; }
+  .page { box-shadow: none; padding: 14mm 14mm 12mm 18mm; width: 100%; }
+  @page { size: A4; margin: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- Control Bar -->
+<div class="control-bar no-print">
+  <label>เดือน:</label>
+  <select id="selMonth">
+    <option value="1">มกราคม</option><option value="2">กุมภาพันธ์</option>
+    <option value="3">มีนาคม</option><option value="4">เมษายน</option>
+    <option value="5">พฤษภาคม</option><option value="6" selected>มิถุนายน</option>
+    <option value="7">กรกฎาคม</option><option value="8">สิงหาคม</option>
+    <option value="9">กันยายน</option><option value="10">ตุลาคม</option>
+    <option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
+  </select>
+  <label>ปี (พ.ศ.):</label>
+  <input type="number" id="inpYear" value="2569" style="width:80px">
+  <button class="btn btn-load" onclick="loadData()">📥 โหลดข้อมูล</button>
+  <button class="btn btn-print" onclick="window.print()">🖨️ พิมพ์ / PDF</button>
+  <span id="statusMsg">กดโหลดข้อมูลเพื่อดึงข้อมูลจากระบบ</span>
+</div>
+
+<!-- Report Page -->
+<div class="page">
+  <h1>รายงานเงินสดรับ-จ่าย</h1>
+
+  <div class="info-row">
+    <span class="info-label">ชื่อผู้ประกอบการ</span>
+    <span class="info-val" contenteditable="true">……………………………………</span>
+    <span class="info-label" style="margin-left:10px;">เลขประจำตัวประชาชน</span>
+    <span class="info-val" contenteditable="true">……………………………………</span>
+  </div>
+  <div class="info-row">
+    <span class="info-label">ชื่อสถานประกอบการ</span>
+    <span class="info-val" contenteditable="true">ครัวพอใจตามสั่ง</span>
+    <span class="info-label" style="margin-left:10px;">เลขประจำตัวผู้เสียภาษีอากร</span>
+    <span class="info-val" contenteditable="true">……………………………………</span>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="col-date" rowspan="2">วัน/เดือน/ปี</th>
+        <th class="col-item" rowspan="2">รายการ</th>
+        <th class="col-inc" rowspan="2">รายรับ<br>(บาท)</th>
+        <th colspan="2">รายจ่าย (บาท)</th>
+        <th class="col-note" rowspan="2">หมายเหตุ</th>
+      </tr>
+      <tr>
+        <th class="col-buy">ซื้อสินค้า/<br>วัตถุดิบ</th>
+        <th class="col-other">ค่าใช้จ่าย<br>อื่น ๆ</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <tr><td colspan="6" style="text-align:center; color:#999; padding:20px;">กดปุ่ม "โหลดข้อมูล" เพื่อดึงข้อมูลจากระบบ</td></tr>
+    </tbody>
+    <tfoot>
+      <tr class="total-row">
+        <td colspan="2">รวม</td>
+        <td class="right" id="totIncome">-</td>
+        <td class="right" id="totBuy">-</td>
+        <td class="right" id="totOther">-</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="summary">
+    <h2 id="sumTitle">สรุป รายรับ-รายจ่าย สำหรับเดือน ……………</h2>
+    <div class="sum-grid">
+      <span>รายรับ</span>   <span>ขายอาหาร</span>         <span></span>                              <span class="r" id="sIncome">-</span>
+      <span>รายจ่าย</span> <span>ซื้อสินค้า/วัตถุดิบ</span> <span class="r" id="sBuy">-</span>       <span></span>
+      <span></span>          <span>ค่าใช้จ่ายอื่น ๆ</span>   <span class="r ul" id="sOther">-</span>  <span class="r ul" id="sTotalExp">-</span>
+      <span></span>          <span id="profitLabel">กำไร (ขาดทุน)</span> <span></span>                <span class="r dul" id="sProfit">-</span>
+    </div>
+  </div>
+
+  <div class="sign-row">
+    <div class="sign-box">
+      <div class="sign-line"></div>
+      <div>ลายมือชื่อผู้ประกอบการ</div>
+      <div style="margin-top:4px; color:#666; font-size:14px;">วันที่ ………/………/………</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbxiA0NpUnLVhp7IK9PLPrK3V0XL1l4ZLOka8DcuS0VkLuIpgMyWGTmfRlSrH_o8Q1TS4A/exec';
+
+const MONTH_TH = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+// หมวดที่นับเป็น "ซื้อสินค้า/วัตถุดิบ"
+const BUY_CATS = ['วัตถุดิบ','บรรจุภัณฑ์'];
+
+const fmt = n => n == null ? '-' : Number(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+function parseDate(str) {
+  // รูปแบบ dd/MM/yyyy
+  if (!str) return null;
+  const [d,m,y] = str.split('/').map(Number);
+  return isNaN(d) ? null : { d, m, y };
+}
+
+function thYear(ceYear) { return ceYear + 543; }
+
+async function loadData() {
+  const month = parseInt(document.getElementById('selMonth').value);
+  const yearBE = parseInt(document.getElementById('inpYear').value);
+  const yearCE = yearBE - 543;
+  const status = document.getElementById('statusMsg');
+
+  status.textContent = '⏳ กำลังโหลดข้อมูล...';
+
+  try {
+    // ดึงข้อมูลทั้งสาม endpoint พร้อมกัน
+    const [ordRes, expRes, incRes] = await Promise.all([
+      fetch(API + '?action=orders').then(r => r.json()),
+      fetch(API + '?action=expenses').then(r => r.json()),
+      fetch(API + '?action=incomes').then(r => r.json()),
+    ]);
+
+    // กรองเฉพาะเดือนที่เลือก
+    const orders = (ordRes.orders || []).filter(o => {
+      const dt = parseDate(o.date);
+      return dt && dt.m === month && dt.y === yearCE && o.status !== 'ยกเลิก';
+    });
+
+    const expenses = (expRes.expenses || []).filter(e => {
+      const dt = parseDate(e.date);
+      return dt && dt.m === month && dt.y === yearCE;
+    });
+
+    // รายรับที่บันทึกเพิ่มเอง (ปุ่ม "+ รายรับ")
+    const manualIncomes = (incRes.incomes || []).filter(i => {
+      const dt = parseDate(i.date);
+      return dt && dt.m === month && dt.y === yearCE;
+    });
+
+    buildTable(orders, expenses, manualIncomes, month, yearBE);
+    status.textContent = `✅ โหลดสำเร็จ — ออเดอร์ ${orders.length} รายการ, รายรับเพิ่มเติม ${manualIncomes.length} รายการ, รายจ่าย ${expenses.length} รายการ`;
+  } catch(err) {
+    status.textContent = '❌ โหลดไม่สำเร็จ: ' + err.message;
+  }
+}
+
+function buildTable(orders, expenses, manualIncomes, month, yearBE) {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  // รวม events จากทั้งหมด แล้ว sort ตามวันที่
+  const events = [];
+
+  // Orders → รายรับจากออเดอร์
+  orders.forEach(o => {
+    const dt = parseDate(o.date);
+    events.push({
+      sortKey: dt ? dt.d * 10000 + 0 : 99999,
+      date: formatDateTH(o.date, yearBE),
+      item: 'ขายอาหาร',
+      income: Number(o.total) || 0,
+      buy: 0, other: 0,
+      note: o.orderNum || '',
+      type: 'income'
+    });
+  });
+
+  // Manual incomes → รายรับที่บันทึกเพิ่มเอง
+  manualIncomes.forEach(i => {
+    const dt = parseDate(i.date);
+    events.push({
+      sortKey: dt ? dt.d * 10000 + 0 : 99999,
+      date: formatDateTH(i.date, yearBE),
+      item: i.name || i.category || 'รายรับอื่นๆ',
+      income: Number(i.amount) || 0,
+      buy: 0, other: 0,
+      note: i.note || '',
+      type: 'income'
+    });
+  });
+
+  // Expenses → รายจ่าย
+  expenses.forEach(e => {
+    const dt = parseDate(e.date);
+    const isBuy = BUY_CATS.includes(e.category);
+    events.push({
+      sortKey: dt ? dt.d * 10000 + 1 : 99999,
+      date: formatDateTH(e.date, yearBE),
+      item: (e.name || e.category) + (e.name && e.category ? ` (${e.category})` : ''),
+      income: 0,
+      buy:   isBuy ? Number(e.amount) || 0 : 0,
+      other: isBuy ? 0 : Number(e.amount) || 0,
+      note: e.note || '',
+      type: 'expense'
+    });
+  });
+
+  events.sort((a,b) => a.sortKey - b.sortKey);
+
+  // --- สรุปรายวัน ---
+  const dayMap = new Map();
+  events.forEach(ev => {
+    const dayKey = String(Math.floor(ev.sortKey / 10000));
+    if (!dayMap.has(dayKey)) {
+      dayMap.set(dayKey, { date: ev.date, orderIncome: 0, manualIncome: 0, buy: 0, other: 0, expItems: [], manualItems: [], dayKey: Number(dayKey) });
+    }
+    const g = dayMap.get(dayKey);
+    if (ev.type === 'income' && ev.item === 'ขายอาหาร') g.orderIncome += ev.income;
+    else if (ev.type === 'income') { g.manualIncome += ev.income; g.manualItems.push(ev.item); }
+    g.buy   += ev.buy;
+    g.other += ev.other;
+    if (ev.type === 'expense') g.expItems.push(ev.item);
+  });
+
+  const days = [...dayMap.values()].sort((a,b) => Number(a.dayKey) - Number(b.dayKey));
+
+  let totalIncome = 0, totalBuy = 0, totalOther = 0;
+
+  if (days.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:16px;">ไม่มีข้อมูลในเดือนนี้</td></tr>';
+  } else {
+    days.forEach(g => {
+      const dayIncome = g.orderIncome + g.manualIncome;
+      totalIncome += dayIncome;
+      totalBuy    += g.buy;
+      totalOther  += g.other;
+
+      let rowCount = 0;
+
+      // แถวขายอาหาร (orders)
+      if (g.orderIncome > 0) {
+        const tr = document.createElement('tr');
+        tr.className = 'income-row';
+        tr.innerHTML = `
+          <td>${rowCount === 0 ? g.date : ''}</td>
+          <td class="left">ขายอาหาร</td>
+          <td class="right">${fmt(g.orderIncome)}</td>
+          <td class="right">-</td><td class="right">-</td><td></td>`;
+        tbody.appendChild(tr); rowCount++;
+      }
+
+      // แถวรายรับที่บันทึกเพิ่มเอง
+      if (g.manualIncome > 0) {
+        const tr = document.createElement('tr');
+        tr.className = 'income-row';
+        tr.innerHTML = `
+          <td>${rowCount === 0 ? g.date : ''}</td>
+          <td class="left">${g.manualItems.join(', ') || 'รายรับอื่นๆ'}</td>
+          <td class="right">${fmt(g.manualIncome)}</td>
+          <td class="right">-</td><td class="right">-</td><td></td>`;
+        tbody.appendChild(tr); rowCount++;
+      }
+
+      // แถวซื้อวัตถุดิบ
+      if (g.buy > 0) {
+        const tr = document.createElement('tr');
+        tr.className = 'expense-row';
+        tr.innerHTML = `
+          <td>${rowCount === 0 ? g.date : ''}</td>
+          <td class="left">ซื้อวัตถุดิบ</td>
+          <td class="right">-</td>
+          <td class="right">${fmt(g.buy)}</td>
+          <td class="right">-</td><td></td>`;
+        tbody.appendChild(tr); rowCount++;
+      }
+
+      // แถวค่าใช้จ่ายอื่นๆ
+      if (g.other > 0) {
+        const tr = document.createElement('tr');
+        tr.className = 'expense-row';
+        tr.innerHTML = `
+          <td>${rowCount === 0 ? g.date : ''}</td>
+          <td class="left">ค่าใช้จ่ายอื่นๆ</td>
+          <td class="right">-</td><td class="right">-</td>
+          <td class="right">${fmt(g.other)}</td>
+          <td class="left" style="font-size:12px;">${g.expItems.join(', ')}</td>`;
+        tbody.appendChild(tr); rowCount++;
+      }
+    });
+  }
+
+  // อัพเดตยอดรวม
+  document.getElementById('totIncome').textContent = fmt(totalIncome);
+  document.getElementById('totBuy').textContent    = fmt(totalBuy);
+  document.getElementById('totOther').textContent  = fmt(totalOther);
+
+  // อัพเดตสรุป
+  const profit = totalIncome - totalBuy - totalOther;
+  const monthName = MONTH_TH[month];
+  document.getElementById('sumTitle').textContent  = `สรุป รายรับ-รายจ่าย สำหรับเดือน ${monthName} ${yearBE}`;
+  document.getElementById('sIncome').textContent   = fmt(totalIncome);
+  document.getElementById('sBuy').textContent      = fmt(totalBuy);
+  document.getElementById('sOther').textContent    = fmt(totalOther);
+  document.getElementById('sTotalExp').textContent = fmt(totalBuy + totalOther);
+  const profitEl = document.getElementById('sProfit');
+  profitEl.textContent = fmt(Math.abs(profit));
+  profitEl.className = 'r dul ' + (profit >= 0 ? 'profit-pos' : 'profit-neg');
+  document.getElementById('profitLabel').textContent = profit >= 0 ? 'กำไร' : 'ขาดทุน';
+}
+
+function formatDateTH(dateStr, yearBE) {
+  if (!dateStr) return '';
+  const [d, m, y] = dateStr.split('/');
+  const SHORT_MONTH = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.',
+                        'ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  return `${parseInt(d)} ${SHORT_MONTH[parseInt(m)]} ${yearBE}`;
+}
+</script>
+</body>
+</html>

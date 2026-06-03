@@ -559,7 +559,10 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
   <div style="padding:12px 16px 0;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <h2 style="font-size:16px;font-weight:700;margin:0;">📊 รายรับ-รายจ่าย</h2>
-      <button onclick="openMonthlySummary()" style="background:rgba(255,255,255,.15);color:var(--text);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:7px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">📋 สรุปสิ้นเดือน</button>
+      <div style="display:flex;gap:6px;">
+        <button onclick="openMonthlySummary()" style="background:rgba(255,255,255,.15);color:var(--text);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:7px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">📋 สรุปสิ้นเดือน</button>
+        <button onclick="openTaxReport()" style="background:#1d4ed8;color:#fff;border:none;border-radius:10px;padding:7px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">📄 รายงานสรรพากร</button>
+      </div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <button onclick="openAddIncome()" style="flex:1;background:#16a34a;color:#fff;border:none;border-radius:10px;padding:8px 0;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">+ รายรับ</button>
@@ -810,7 +813,7 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 // ══════════════════════════════════════════
 //  🔧 ตั้งค่า URL
 // ══════════════════════════════════════════
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwTmdiw1ZqpmSKZ19UvWsRjU2BcEO3letH0SPE-i1ecoA_kjC7edXkh-WuE6NS6VPykmg/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxiA0NpUnLVhp7IK9PLPrK3V0XL1l4ZLOka8DcuS0VkLuIpgMyWGTmfRlSrH_o8Q1TS4A/exec';
 
 // ══════════════════════════════════════════
 //  🔐 PIN — เปลี่ยนรหัสที่นี่
@@ -1099,13 +1102,22 @@ function getActions(status, num) {
   const isKitchen = document.body.classList.contains('role-kitchen');
   const editBtn   = isKitchen ? '' : `<button class="action-btn" style="background:#f0fdf4;color:#16a34a;" onclick="openEditOrder('${num}')">✏️ แก้ไข</button>`;
   const cancelBtn = isKitchen ? '' : `<button class="action-btn btn-cancel" onclick="updateStatus('${num}','ยกเลิก')">❌ ยกเลิก</button>`;
+  const billBtn   = isKitchen ? '' : `<button class="action-btn" style="background:#eff6ff;color:#1d4ed8;" onclick="openBill('${num}')">🧾 ออกบิล</button>`;
   const map = {
     'รอทำ':      `<button class="action-btn btn-confirm" onclick="updateStatus('${num}','รับออเดอร์')">✅ รับออเดอร์</button>${editBtn}${cancelBtn}`,
     'รับออเดอร์': `<button class="action-btn btn-cooking" onclick="startCooking('${num}')">👨‍🍳 เริ่มทำ</button>${editBtn}${cancelBtn}`,
     'กำลังทำ':   `<button class="action-btn btn-cooking" onclick="openCookScreen('${num}')">👨‍🍳 ดูรายการ</button><button class="action-btn btn-done" onclick="updateStatus('${num}','เสร็จแล้ว')">🎉 ทำเสร็จ</button>`,
-    'เสร็จแล้ว': isKitchen ? '' : `<button class="action-btn btn-deliver" onclick="updateStatus('${num}','ส่งแล้ว')">🛵 ส่งแล้ว / รับแล้ว</button>`,
+    'เสร็จแล้ว': isKitchen ? '' : `<button class="action-btn btn-deliver" onclick="updateStatus('${num}','ส่งแล้ว')">🛵 ส่งแล้ว / รับแล้ว</button>${billBtn}`,
+    'ส่งแล้ว':   billBtn,
   };
   return map[status] || '';
+}
+
+function openBill(orderNum) {
+  const order = allOrders.find(o => o.orderNum === orderNum);
+  const date  = order ? encodeURIComponent(order.date) : '';
+  const url   = 'บิลเงินสด.html?order=' + encodeURIComponent(orderNum) + '&date=' + date;
+  window.open(url, '_blank');
 }
 
 // ════════════════════════════════════════
@@ -1155,7 +1167,9 @@ function closeCookScreen() {
 async function updateStatus(orderNum, newStatus) {
   showToast('⏳ กำลังอัปเดต...');
   try {
-    const res  = await fetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({action:'updateOrderStatus',orderNum,status:newStatus}), redirect:'follow' });
+    const order = allOrders.find(o => o.orderNum === orderNum);
+    const rowIndex = order ? order.rowIndex : null;
+    const res  = await fetch(APPS_SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({action:'updateOrderStatus',orderNum,status:newStatus,rowIndex}), redirect:'follow' });
     const data = JSON.parse(await res.text());
     if (data.status !== 'success') throw new Error(data.message);
     const idx = allOrders.findIndex(o => o.orderNum === orderNum);
@@ -2275,6 +2289,12 @@ async function saveIncome() {
 // ════════════════════════════════════════
 //  MONTHLY SUMMARY
 // ════════════════════════════════════════
+function openTaxReport() {
+  // เปิดไฟล์รายงานสรรพากรในแท็บใหม่
+  const reportPath = window.location.href.replace('Admin_Order_Page.html', 'รายงานเงินสดรับ-จ่าย.html');
+  window.open(reportPath, '_blank');
+}
+
 function openMonthlySummary() {
   const sel = document.getElementById('sum-month');
   sel.innerHTML = '';
@@ -2319,7 +2339,7 @@ async function loadMonthlySummary() {
 
     const orders = (ordersData.orders || []).filter(o => {
       const d = parseDateStr(String(o.date));
-      return d >= fromD && d <= toD;
+      return d >= fromD && d <= toD && o.status !== 'ยกเลิก';
     });
     const manualIncomes = incData.incomes || [];
     const expenses      = expData.expenses || [];
@@ -2458,16 +2478,17 @@ async function loadAccounting(range, tab) {
     const incMonthData=await incMonthRes.json();
 
     const allOrders = ordersData.orders || [];
+    const notCancelled = o => o.status !== 'ยกเลิก';
     const inRange = d => { const s=parseDateStr(String(d)); return s>=fromD&&s<=toD; };
     const inMonth = d => { const s=parseDateStr(String(d)); return s>=monthFrom&&s<=todayStr; };
-    const incomeList  = allOrders.filter(o=>inRange(o.date));
-    const incomeMonth = allOrders.filter(o=>inMonth(o.date));
+    const incomeList  = allOrders.filter(o=>inRange(o.date)&&notCancelled(o));
+    const incomeMonth = allOrders.filter(o=>inMonth(o.date)&&notCancelled(o));
     const expList     = expListData.expenses   || [];
     const expMonth    = expMonthData.expenses  || [];
     const manualIncList  = incListData.incomes  || [];
     const manualIncMonth = incMonthData.incomes || [];
 
-    const orderToday = allOrders.filter(o=>parseDateStr(String(o.date))===todayStr).reduce((s,o)=>s+(parseFloat(o.total)||0),0);
+    const orderToday = allOrders.filter(o=>parseDateStr(String(o.date))===todayStr&&notCancelled(o)).reduce((s,o)=>s+(parseFloat(o.total)||0),0);
     const manualIncToday = (incMonthData.incomes||[]).filter(i=>parseDateStr(String(i.date))===todayStr).reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
     const incomeToday = orderToday+manualIncToday;
     const expToday = (expMonthData.expenses||[]).filter(e=>parseDateStr(String(e.date))===todayStr).reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
@@ -2569,37 +2590,4 @@ async function saveExpense() {
   const note   = document.getElementById('exp-note').value.trim();
   if (!name || !amount) { showToast('❌ กรุณากรอกรายการและจำนวนเงิน'); return; }
   const btn = document.getElementById('exp-save-btn');
-  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
-  try {
-    let receiptUrl = '';
-    if (_receiptBase64) {
-      showToast('📤 กำลังอัพโหลดใบเสร็จ...');
-      const upRes = await fetch(APPS_SCRIPT_URL, {
-        method:'POST', headers:{'Content-Type':'text/plain'},
-        body: JSON.stringify({action:'uploadReceipt', imageBase64:_receiptBase64, mimeType:_receiptMime, filename:'receipt_'+Date.now()+'.jpg'}),
-        redirect:'follow'
-      });
-      const upData = await upRes.json();
-      if (upData.status==='success') receiptUrl = upData.url||'';
-    }
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method:'POST', headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({action:'addExpense', category:cat, name, amount, note, receiptUrl}),
-      redirect:'follow'
-    });
-    const data = await res.json();
-    if (data.status!=='success') throw new Error(data.message||'บันทึกไม่สำเร็จ');
-    document.getElementById('expense-modal').classList.remove('open');
-    showToast('✅ บันทึกรายจ่ายแล้ว'+(receiptUrl?' 📎':''));
-    loadAccounting(_accRange, _accTab);
-  } catch(err) { showToast('❌ '+err.message); }
-  finally { btn.disabled=false; btn.textContent='💾 บันทึก'; }
-}
-
-async function loadExpenses(range) {
-  loadAccounting(range||_accRange, _accTab);
-}
-
-</script>
-</body>
-</html>
+  btn.disabled = true; btn.textContent = '⏳ กำลังบ
