@@ -1102,13 +1102,22 @@ function getActions(status, num) {
   const isKitchen = document.body.classList.contains('role-kitchen');
   const editBtn   = isKitchen ? '' : `<button class="action-btn" style="background:#f0fdf4;color:#16a34a;" onclick="openEditOrder('${num}')">✏️ แก้ไข</button>`;
   const cancelBtn = isKitchen ? '' : `<button class="action-btn btn-cancel" onclick="updateStatus('${num}','ยกเลิก')">❌ ยกเลิก</button>`;
+  const billBtn   = isKitchen ? '' : `<button class="action-btn" style="background:#eff6ff;color:#1d4ed8;" onclick="openBill('${num}')">🧾 ออกบิล</button>`;
   const map = {
     'รอทำ':      `<button class="action-btn btn-confirm" onclick="updateStatus('${num}','รับออเดอร์')">✅ รับออเดอร์</button>${editBtn}${cancelBtn}`,
     'รับออเดอร์': `<button class="action-btn btn-cooking" onclick="startCooking('${num}')">👨‍🍳 เริ่มทำ</button>${editBtn}${cancelBtn}`,
     'กำลังทำ':   `<button class="action-btn btn-cooking" onclick="openCookScreen('${num}')">👨‍🍳 ดูรายการ</button><button class="action-btn btn-done" onclick="updateStatus('${num}','เสร็จแล้ว')">🎉 ทำเสร็จ</button>`,
-    'เสร็จแล้ว': isKitchen ? '' : `<button class="action-btn btn-deliver" onclick="updateStatus('${num}','ส่งแล้ว')">🛵 ส่งแล้ว / รับแล้ว</button>`,
+    'เสร็จแล้ว': isKitchen ? '' : `<button class="action-btn btn-deliver" onclick="updateStatus('${num}','ส่งแล้ว')">🛵 ส่งแล้ว / รับแล้ว</button>${billBtn}`,
+    'ส่งแล้ว':   billBtn,
   };
   return map[status] || '';
+}
+
+function openBill(orderNum) {
+  const order = allOrders.find(o => o.orderNum === orderNum);
+  const date  = order ? encodeURIComponent(order.date) : '';
+  const url   = 'บิลเงินสด.html?order=' + encodeURIComponent(orderNum) + '&date=' + date;
+  window.open(url, '_blank');
 }
 
 // ════════════════════════════════════════
