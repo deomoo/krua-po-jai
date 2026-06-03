@@ -81,9 +81,19 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 .report-bar-fill{height:100%;border-radius:6px;background:var(--blue);transition:.3s;}
 .report-bar-val{font-size:12px;font-weight:700;color:var(--text2);width:50px;text-align:right;}
 .report-empty{text-align:center;color:var(--text2);padding:32px 0;font-size:14px;}
+.rpt-day-group{margin-bottom:16px;}
+.rpt-day-header{font-weight:700;font-size:14px;color:var(--blue);padding:6px 0;border-bottom:2px solid var(--border);margin-bottom:6px;display:flex;justify-content:space-between;}
+.rpt-order-row{display:flex;gap:8px;padding:6px 4px;border-bottom:1px solid var(--border);font-size:13px;align-items:flex-start;}
+.rpt-order-num{font-weight:700;color:var(--text);min-width:48px;}
+.rpt-order-items{flex:1;color:var(--text);line-height:1.5;}
+.rpt-order-total{font-weight:700;color:var(--green);white-space:nowrap;}
+.rpt-menu-day-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.rpt-menu-day-name{color:var(--text);}
+.rpt-menu-day-qty{font-weight:700;color:var(--blue);}
 .quick-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
 .quick-btn{background:#e0e7ff;color:var(--blue);border:none;border-radius:8px;padding:6px 12px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;}
 .quick-btn:active{opacity:.75;}
+.active-range{background:var(--blue)!important;color:#fff!important;}
 
 /* ── Edit Order Sheet ── */
 .edit-overlay{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;animation:fadeIn .2s;}
@@ -244,6 +254,28 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e293b;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;z-index:999;transition:transform .3s;white-space:nowrap;}
 .toast.show{transform:translateX(-50%) translateY(0);}
 .auto-bar{background:#eff6ff;text-align:center;font-size:11px;color:var(--blue);padding:4px;}
+/* ── Manual Order Sheet ── */
+.manual-sheet-body{flex:1;overflow-y:auto;padding:14px 16px;}
+.manual-section{margin-bottom:16px;}
+.manual-section-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+.type-toggle{display:flex;gap:8px;}
+.type-toggle-btn{flex:1;padding:10px;border-radius:10px;border:2px solid var(--border);background:#fff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);transition:.15s;}
+.type-toggle-btn.active{border-color:var(--blue);background:#eff6ff;color:var(--blue);}
+.pay-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.pay-btn{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;color:var(--text2);}
+.pay-btn.active{border-color:var(--green);background:#f0fdf4;color:var(--green);}
+/* Voice Section */
+.voice-section{background:linear-gradient(135deg,#1e40af,#2563eb);border-radius:16px;padding:16px;margin-bottom:16px;text-align:center;}
+.voice-title{color:rgba(255,255,255,.8);font-size:12px;margin-bottom:12px;}
+.voice-mic-btn{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;font-size:28px;display:inline-flex;align-items:center;justify-content:center;transition:.2s;background:rgba(255,255,255,.15);}
+.voice-mic-btn.listening{background:#ef4444;animation:pulse 1s infinite;}
+.voice-mic-btn:active{transform:scale(.93);}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}50%{box-shadow:0 0 0 12px rgba(239,68,68,0)}}
+.voice-status{color:rgba(255,255,255,.7);font-size:12px;margin-top:8px;min-height:16px;}
+.voice-transcript{background:rgba(0,0,0,.2);border-radius:10px;padding:10px 12px;margin-top:10px;color:#fff;font-size:13px;text-align:left;min-height:36px;line-height:1.5;display:none;}
+.voice-transcript.show{display:block;}
+.voice-parse-btn{margin-top:10px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:10px;padding:8px 18px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;}
+.unmatched-tag{background:#fef9c3;color:#854d0e;font-size:11px;padding:3px 8px;border-radius:6px;display:inline-block;margin:2px;}
 /* ── Kitchen Role ── */
 .role-kitchen .action-btn[onclick*="openEditOrder"],
 .role-kitchen .action-btn[onclick*="ยกเลิก"] { display:none; }
@@ -277,7 +309,6 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
   <div class="login-sub">กรอก PIN 4 หลักเพื่อเข้าใช้งาน</div>
   <div class="login-role-tabs">
     <button class="login-role-btn active" id="tab-admin" onclick="setLoginRole('admin')">👩‍💼 แอดมิน</button>
-    <button class="login-role-btn" id="tab-kitchen" onclick="setLoginRole('kitchen')">👨‍🍳 หลังครัว</button>
   </div>
   <div class="pin-dots">
     <div class="pin-dot" id="d0"></div>
@@ -315,6 +346,9 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
 <div class="auto-bar">รีเฟรชอัตโนมัติทุก 30 วินาที</div>
 
 <div class="page active" id="page-orders">
+  <div style="padding:10px 16px 0;display:flex;justify-content:flex-end;">
+    <button onclick="openManualOrder()" style="background:var(--green);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">📞 สร้างออเดอร์</button>
+  </div>
   <div class="summary">
     <div class="sum-card new"><div class="sum-num" id="cnt-new">0</div><div class="sum-label">รอทำ</div></div>
     <div class="sum-card doing"><div class="sum-num" id="cnt-doing">0</div><div class="sum-label">กำลังทำ</div></div>
@@ -505,7 +539,247 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
       <div class="report-card-title">💳 วิธีชำระเงิน</div>
       <div id="rpt-payment-body"><div class="report-empty">ยังไม่มีข้อมูล</div></div>
     </div>
+
+    <!-- สรุปเมนูรายวัน -->
+    <div class="report-card">
+      <div class="report-card-title">🍽 สรุปเมนูที่ขายแต่ละวัน</div>
+      <div id="rpt-menu-daily-body"><div class="report-empty">ยังไม่มีข้อมูล</div></div>
+    </div>
+
+    <!-- รายละเอียดแต่ละออเดอร์ -->
+    <div class="report-card">
+      <div class="report-card-title">📋 รายละเอียดออเดอร์</div>
+      <div id="rpt-order-detail-body"><div class="report-empty">ยังไม่มีข้อมูล</div></div>
+    </div>
   </div>
+</div>
+
+<!-- หน้ารายรับ-รายจ่าย -->
+<div class="page" id="page-expense">
+  <div style="padding:12px 16px 0;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <h2 style="font-size:16px;font-weight:700;margin:0;">📊 รายรับ-รายจ่าย</h2>
+      <button onclick="openMonthlySummary()" style="background:rgba(255,255,255,.15);color:var(--text);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:7px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">📋 สรุปสิ้นเดือน</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button onclick="openAddIncome()" style="flex:1;background:#16a34a;color:#fff;border:none;border-radius:10px;padding:8px 0;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">+ รายรับ</button>
+      <button onclick="openAddExpense()" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:10px;padding:8px 0;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">+ รายจ่าย</button>
+    </div>
+
+    <!-- KPI วันนี้ -->
+    <div style="font-size:11px;color:var(--text2);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">วันนี้</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div class="kpi-card"><div class="kpi-label">💚 รายรับ</div><div class="kpi-val" id="acc-income-today" style="color:#22c55e;font-size:15px;">฿0</div></div>
+      <div class="kpi-card"><div class="kpi-label">❤️ รายจ่าย</div><div class="kpi-val" id="acc-exp-today" style="color:var(--red);font-size:15px;">฿0</div></div>
+      <div class="kpi-card"><div class="kpi-label">💛 กำไร</div><div class="kpi-val" id="acc-profit-today" style="font-size:15px;">฿0</div></div>
+    </div>
+
+    <!-- KPI เดือนนี้ -->
+    <div style="font-size:11px;color:var(--text2);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">เดือนนี้</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div class="kpi-card"><div class="kpi-label">💚 รายรับ</div><div class="kpi-val" id="acc-income-month" style="color:#22c55e;font-size:15px;">฿0</div></div>
+      <div class="kpi-card"><div class="kpi-label">❤️ รายจ่าย</div><div class="kpi-val" id="acc-exp-month" style="color:var(--red);font-size:15px;">฿0</div></div>
+      <div class="kpi-card"><div class="kpi-label">💛 กำไร</div><div class="kpi-val" id="acc-profit-month" style="font-size:15px;">฿0</div></div>
+    </div>
+
+    <!-- Filter range -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;" id="acc-range-btns">
+      <button class="quick-btn acc-range-btn active-range" onclick="switchAccRange('today')">วันนี้</button>
+      <button class="quick-btn acc-range-btn" onclick="switchAccRange('week')">7 วัน</button>
+      <button class="quick-btn acc-range-btn" onclick="switchAccRange('month')">เดือนนี้</button>
+    </div>
+
+    <!-- Tab รายรับ / รายจ่าย / ทั้งหมด -->
+    <div style="display:flex;background:rgba(255,255,255,.08);border-radius:10px;padding:3px;margin-bottom:12px;" id="acc-tab-btns">
+      <button onclick="switchAccTab('all')" id="acc-tab-all" style="flex:1;padding:7px 0;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff;">ทั้งหมด</button>
+      <button onclick="switchAccTab('income')" id="acc-tab-income" style="flex:1;padding:7px 0;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--text2);">💚 รายรับ</button>
+      <button onclick="switchAccTab('expense')" id="acc-tab-expense" style="flex:1;padding:7px 0;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--text2);">❤️ รายจ่าย</button>
+    </div>
+
+    <!-- List -->
+    <div id="accounting-list"><div class="report-empty">กำลังโหลด...</div></div>
+  </div>
+</div>
+
+<!-- Modal เพิ่มรายรับ -->
+<div class="modal-overlay" id="income-modal" onclick="closeIncomeModal(event)">
+  <div class="modal">
+    <div class="modal-title">💚 เพิ่มรายรับ</div>
+    <div class="form-group">
+      <label class="form-label">หมวดหมู่</label>
+      <select class="form-select" id="inc-cat">
+        <option>ขายอาหาร (นอกระบบ)</option><option>ค่าจัดเลี้ยง</option>
+        <option>รายรับอื่นๆ</option><option>เงินโอนจากลูกค้า</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">รายการ *</label>
+      <input class="form-input" id="inc-name" type="text" placeholder="เช่น จัดเลี้ยงงานแต่ง, ขายน้ำ">
+    </div>
+    <div class="form-group">
+      <label class="form-label">จำนวนเงิน (฿) *</label>
+      <input class="form-input" id="inc-amount" type="number" min="0" placeholder="500">
+    </div>
+    <div class="form-group">
+      <label class="form-label">หมายเหตุ</label>
+      <input class="form-input" id="inc-note" type="text" placeholder="(ไม่บังคับ)">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn btn-close" onclick="closeIncomeModal()">ยกเลิก</button>
+      <button class="modal-btn btn-save" onclick="saveIncome()" style="background:#16a34a;">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal สรุปบัญชีสิ้นเดือน -->
+<div class="modal-overlay" id="summary-modal" onclick="closeSummaryModal(event)" style="align-items:flex-start;padding-top:20px;">
+  <div class="modal" style="max-height:85vh;overflow-y:auto;width:100%;max-width:480px;">
+    <div class="modal-title" style="font-size:15px;">📋 สรุปบัญชีสิ้นเดือน</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+      <select class="form-select" id="sum-month" style="flex:1;"></select>
+      <button onclick="loadMonthlySummary()" style="background:var(--blue);color:#fff;border:none;border-radius:10px;padding:9px 16px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">โหลด</button>
+    </div>
+    <div id="summary-content"><div class="report-empty">เลือกเดือนแล้วกด "โหลด"</div></div>
+    <div style="margin-top:14px;display:flex;gap:8px;">
+      <button onclick="printSummary()" style="flex:1;background:var(--blue);color:#fff;border:none;border-radius:10px;padding:10px 0;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">🖨️ พิมพ์ / บันทึก PDF</button>
+      <button onclick="closeSummaryModal()" style="flex:1;background:rgba(255,255,255,.1);color:var(--text);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:10px 0;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal เพิ่มรายจ่าย -->
+<div class="modal-overlay" id="expense-modal" onclick="closeExpenseModal(event)">
+  <div class="modal">
+    <div class="modal-title">💸 เพิ่มรายจ่าย</div>
+    <div class="form-group">
+      <label class="form-label">หมวดหมู่</label>
+      <select class="form-select" id="exp-cat">
+        <option>วัตถุดิบ</option><option>แก๊ส/เชื้อเพลิง</option>
+        <option>บรรจุภัณฑ์</option><option>ค่าจ้าง</option>
+        <option>ค่าเช่า</option><option>อื่นๆ</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">รายการ *</label>
+      <input class="form-input" id="exp-name" type="text" placeholder="เช่น หมูกรอบ, น้ำมัน">
+    </div>
+    <div class="form-group">
+      <label class="form-label">จำนวนเงิน (฿) *</label>
+      <input class="form-input" id="exp-amount" type="number" min="0" placeholder="200">
+    </div>
+    <div class="form-group">
+      <label class="form-label">หมายเหตุ</label>
+      <input class="form-input" id="exp-note" type="text" placeholder="(ไม่บังคับ)">
+    </div>
+    <!-- Receipt photo -->
+    <div class="form-group">
+      <label class="form-label">📎 แนบใบเสร็จ (ไม่บังคับ)</label>
+      <label for="exp-receipt" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1.5px dashed rgba(255,255,255,.25);border-radius:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text2);">
+        <span style="font-size:20px;">📷</span>
+        <span id="exp-receipt-label">ถ่ายรูป / เลือกไฟล์</span>
+      </label>
+      <input type="file" id="exp-receipt" accept="image/*" capture="environment" style="display:none;" onchange="previewReceipt(this)">
+      <div id="exp-receipt-preview" style="margin-top:8px;display:none;">
+        <img id="exp-receipt-img" style="width:100%;max-height:180px;object-fit:contain;border-radius:8px;border:1px solid rgba(255,255,255,.15);">
+        <button onclick="clearReceipt()" style="margin-top:4px;background:transparent;border:none;color:var(--red);font-size:12px;cursor:pointer;">✕ ลบรูป</button>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn btn-close" onclick="closeExpenseModal()">ยกเลิก</button>
+      <button class="modal-btn btn-save" id="exp-save-btn" onclick="saveExpense()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Manual Order Sheet ════ -->
+<div id="manual-overlay" class="edit-overlay" onclick="closeManualOrder()"></div>
+<div id="manual-order-sheet" class="edit-order-sheet" style="max-height:95vh;">
+  <div class="edit-sheet-header">
+    <span class="edit-sheet-title">📞 สร้างออเดอร์ใหม่</span>
+    <button class="edit-close-btn" onclick="closeManualOrder()">✕</button>
+  </div>
+  <div class="manual-sheet-body">
+
+    <!-- Voice Section -->
+    <div class="voice-section">
+      <div class="voice-title">🎙️ พูดรายการอาหารได้เลย (ภาษาไทย)</div>
+      <button class="voice-mic-btn" id="voice-mic-btn" onclick="toggleVoice()">🎙️</button>
+      <div class="voice-status" id="voice-status">กดไมค์แล้วพูดรายการ</div>
+      <div class="voice-transcript" id="voice-transcript"></div>
+      <button class="voice-parse-btn" id="voice-parse-btn" onclick="parseVoiceTranscript()" style="display:none;">✅ แปลงเป็นเมนู</button>
+    </div>
+
+    <!-- ชื่อลูกค้า -->
+    <div class="manual-section">
+      <div class="manual-section-title">ชื่อลูกค้า</div>
+      <input class="form-input" id="mo-customer" type="text" placeholder="เช่น คุณสมชาย, ห้อง 301">
+    </div>
+
+    <!-- ประเภท -->
+    <div class="manual-section">
+      <div class="manual-section-title">ประเภท</div>
+      <div class="type-toggle">
+        <button class="type-toggle-btn active" id="mo-type-pickup" onclick="setMoType('รับหน้าร้าน')">🏪 รับหน้าร้าน</button>
+        <button class="type-toggle-btn" id="mo-type-deliver" onclick="setMoType('ส่ง')">🛵 ส่ง</button>
+      </div>
+    </div>
+
+    <!-- ที่อยู่ (เฉพาะส่ง) -->
+    <div class="manual-section" id="mo-address-wrap" style="display:none;">
+      <div class="manual-section-title">ที่อยู่จัดส่ง</div>
+      <input class="form-input" id="mo-address" type="text" placeholder="อาคาร/ห้อง/ชั้น">
+    </div>
+
+    <!-- การชำระเงิน -->
+    <div class="manual-section">
+      <div class="manual-section-title">การชำระเงิน</div>
+      <div class="pay-btns">
+        <button class="pay-btn active" onclick="setMoPay(this,'เงินสด')">💵 เงินสด</button>
+        <button class="pay-btn" onclick="setMoPay(this,'โอน')">📱 โอน</button>
+        <button class="pay-btn" onclick="setMoPay(this,'คนละครึ่ง')">🏦 คนละครึ่ง</button>
+        <button class="pay-btn" onclick="setMoPay(this,'อื่นๆ')">💳 อื่นๆ</button>
+      </div>
+    </div>
+
+    <!-- รายการ -->
+    <div class="manual-section">
+      <div class="manual-section-title">รายการอาหาร</div>
+      <div id="mo-items-body"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn-add-menu" style="flex:1;margin-top:0;" onclick="openMoPicker()">➕ เพิ่มเมนู</button>
+        <button class="btn-add-menu" style="flex:1;margin-top:0;background:#faf5ff;border-color:#c4b5fd;color:#7c3aed;" onclick="addMoCustom()">⭐ รายการพิเศษ</button>
+      </div>
+    </div>
+
+    <!-- โน้ต -->
+    <div class="manual-section">
+      <div class="manual-section-title">โน้ต / หมายเหตุ</div>
+      <input class="form-input" id="mo-note" type="text" placeholder="แพ้อาหาร, ขอซอสเพิ่ม...">
+    </div>
+  </div>
+
+  <div class="edit-sheet-footer">
+    <div class="edit-total-row">
+      <span>ยอดรวม</span>
+      <span class="edit-total-amt" id="mo-total">฿0</span>
+    </div>
+    <div class="edit-footer-btns">
+      <button class="btn-edit-cancel" onclick="closeManualOrder()">ยกเลิก</button>
+      <button class="btn-edit-save" onclick="saveManualOrder()">📞 บันทึกออเดอร์</button>
+    </div>
+  </div>
+</div>
+
+<!-- Menu Picker สำหรับ Manual Order -->
+<div id="mo-picker" class="menu-picker" style="z-index:220;">
+  <div class="picker-header">
+    <span class="picker-title">เลือกเมนู</span>
+    <button class="picker-close-btn" onclick="closeMoPicker()">✕</button>
+  </div>
+  <div class="picker-search">
+    <input class="picker-search-input" id="mo-picker-search" type="text" placeholder="🔍 ค้นหาเมนู..." oninput="filterMoPicker(this.value)">
+  </div>
+  <div id="mo-picker-list" class="picker-list"></div>
 </div>
 
 <nav class="bottom-nav">
@@ -526,13 +800,17 @@ body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:var(
     <span class="nav-icon">🧅</span>
     <span>วัตถุดิบ</span>
   </button>
+  <button class="nav-btn" id="nav-expense" onclick="showPage('expense')">
+    <span class="nav-icon">📊</span>
+    <span>บัญชี</span>
+  </button>
 </nav>
 
 <script>
 // ══════════════════════════════════════════
 //  🔧 ตั้งค่า URL
 // ══════════════════════════════════════════
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw-_hcz2P3IXtrJdmph_MdodAY-AIym34bV9isYtgTJIq3f3VHi2z4-3l0A5yRq-21SFg/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwTmdiw1ZqpmSKZ19UvWsRjU2BcEO3letH0SPE-i1ecoA_kjC7edXkh-WuE6NS6VPykmg/exec';
 
 // ══════════════════════════════════════════
 //  🔐 PIN — เปลี่ยนรหัสที่นี่
@@ -635,6 +913,22 @@ let allMenus    = [];
 let lastLatestOrderNum = ''; // 👈 ตัวแปรเช็คออเดอร์ล่าสุดเพื่อเล่นเสียง
 let activeOrderFilter = 'all';
 let activeMenuCat     = 'all';
+const doneTimestamps  = {}; // track เวลาที่ order เป็น "เสร็จแล้ว"
+
+// แจ้งเตือนออเดอร์เสร็จแล้วแต่ยังไม่ส่ง/รับ นานเกิน 20 นาที
+setInterval(() => {
+  const now = Date.now();
+  allOrders.forEach(o => {
+    if (o.status === 'เสร็จแล้ว' && doneTimestamps[o.orderNum]) {
+      const mins = (now - doneTimestamps[o.orderNum]) / 60000;
+      if (mins >= 20 && !doneTimestamps[o.orderNum + '_alerted']) {
+        doneTimestamps[o.orderNum + '_alerted'] = true;
+        speakAlert('ออเดอร์ ' + o.orderNum.replace('#','').split('').join(' ') + ' เสร็จแล้ว กรุณากดส่งหรือรับแล้ว');
+        showToast('⚠️ ' + o.orderNum + ' เสร็จมา 20 นาทีแล้ว ยังไม่ได้กดส่ง/รับ!', 6000);
+      }
+    }
+  });
+}, 60000);
 let menuSearchQ       = '';
 let currentPage       = 'orders';
 
@@ -690,6 +984,7 @@ function showPage(page) {
   if (page === 'menu' && allMenus.length === 0) loadMenus();
   if (page === 'report') initReport();
   if (page === 'ingredient') loadIngredients();
+  if (page === 'expense') loadAccounting('today', 'all');
 }
 
 function refreshCurrent() {
@@ -734,10 +1029,24 @@ async function loadOrders() {
   finally { document.getElementById('loading').style.display = 'none'; }
 }
 
+function getTodayStr() {
+  return toLocalDateStr(new Date());
+}
+
 function renderOrders() {
   const c = document.getElementById('orders-container');
-  const list = activeOrderFilter === 'all' ? allOrders : allOrders.filter(o => o.status === activeOrderFilter);
-  if (!list.length) { c.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div>${activeOrderFilter==='all'?'ยังไม่มีออเดอร์':'ไม่มีออเดอร์สถานะนี้'}</div></div>`; return; }
+  const today = getTodayStr();
+  let list;
+  if (activeOrderFilter === 'all') {
+    // หน้าหลัก: เฉพาะออเดอร์วันนี้ที่ยังไม่เสร็จ
+    list = allOrders.filter(o => {
+      const d = o.date ? toLocalDateStr(parseOrderDate(o.date)) : '';
+      return d === today && o.status !== 'เสร็จแล้ว' && o.status !== 'ส่งแล้ว' && o.status !== 'ยกเลิก';
+    });
+  } else {
+    list = allOrders.filter(o => o.status === activeOrderFilter);
+  }
+  if (!list.length) { c.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div>${activeOrderFilter==='all'?'ไม่มีออเดอร์คงค้างวันนี้':'ไม่มีออเดอร์สถานะนี้'}</div></div>`; return; }
   c.innerHTML = list.map(orderCard).join('');
 }
 
@@ -851,6 +1160,8 @@ async function updateStatus(orderNum, newStatus) {
     if (data.status !== 'success') throw new Error(data.message);
     const idx = allOrders.findIndex(o => o.orderNum === orderNum);
     if (idx !== -1) allOrders[idx].status = newStatus;
+    if (newStatus === 'เสร็จแล้ว') doneTimestamps[orderNum] = Date.now();
+    if (newStatus === 'ส่งแล้ว') { delete doneTimestamps[orderNum]; delete doneTimestamps[orderNum+'_alerted']; }
     renderOrders(); updateSummary();
     showToast('✅ ' + newStatus + ' แล้ว');
   } catch(err) { showToast('❌ ' + err.message); }
@@ -864,11 +1175,13 @@ function filterOrders(f, btn) {
 }
 
 function updateSummary() {
-  const pending = allOrders.filter(o => o.status === 'รอทำ').length;
+  const today = getTodayStr();
+  const todayOrders = allOrders.filter(o => o.date && toLocalDateStr(parseOrderDate(o.date)) === today);
+  const pending = todayOrders.filter(o => o.status === 'รอทำ').length;
   document.getElementById('cnt-new').textContent   = pending;
-  document.getElementById('cnt-doing').textContent = allOrders.filter(o => o.status==='กำลังทำ'||o.status==='รับออเดอร์').length;
-  document.getElementById('cnt-done').textContent  = allOrders.filter(o => o.status==='เสร็จแล้ว'||o.status==='ส่งแล้ว').length;
-  document.getElementById('cnt-all').textContent   = allOrders.length;
+  document.getElementById('cnt-doing').textContent = todayOrders.filter(o => o.status==='กำลังทำ'||o.status==='รับออเดอร์').length;
+  document.getElementById('cnt-done').textContent  = todayOrders.filter(o => o.status==='เสร็จแล้ว'||o.status==='ส่งแล้ว').length;
+  document.getElementById('cnt-all').textContent   = todayOrders.filter(o => o.status !== 'ยกเลิก').length;
   const badge = document.getElementById('badge-orders');
   badge.textContent = pending;
   badge.style.display = pending > 0 ? 'block' : 'none';
@@ -1476,17 +1789,21 @@ function renderReport() {
     </table>`;
   }
 
+  // ── helper: parse items string → [{name, qty}] ──
+  function parseItems(itemsStr) {
+    return String(itemsStr||'').split(',').map(s => s.trim()).filter(Boolean).map(line => {
+      // format: "กะเพราหมูกรอบ x1 (+addon)" or "• name x2"
+      const m = line.replace(/^[•\s]+/,'').match(/^(.+?)\s+x(\d+)/);
+      if (m) return { name: m[1].trim(), qty: parseInt(m[2])||1 };
+      return { name: line.replace(/^[•\s]+/,''), qty: 1 };
+    });
+  }
+
   // ── เมนูขายดี ──
   const menuCount = {};
   filtered.forEach(o => {
-    const items = String(o.items||'').split('\n');
-    items.forEach(line => {
-      const m = line.match(/^x?(\d+)\s+(.+?)(\s+฿\d+)?$/);
-      if (m) {
-        const name = m[2].trim();
-        const qty  = parseInt(m[1])||1;
-        menuCount[name] = (menuCount[name]||0) + qty;
-      }
+    parseItems(o.items).forEach(({name, qty}) => {
+      menuCount[name] = (menuCount[name]||0) + qty;
     });
   });
   const topMenus = Object.entries(menuCount).sort((a,b) => b[1]-a[1]).slice(0,10);
@@ -1538,7 +1855,751 @@ function renderReport() {
         <div class="report-bar-bg"><div class="report-bar-fill" style="width:${Math.round(cnt/maxPay*100)}%;background:var(--green)"></div></div>
         <div class="report-bar-val">${cnt}</div>
       </div>`).join('');
+
+  // ── สรุปเมนูรายวัน ──
+  const menuDailyEl = document.getElementById('rpt-menu-daily-body');
+  if (dayKeys.length === 0) {
+    menuDailyEl.innerHTML = '<div class="report-empty">ไม่มีข้อมูลในช่วงนี้</div>';
+  } else {
+    menuDailyEl.innerHTML = dayKeys.map(d => {
+      const dayOrders = filtered.filter(o => toLocalDateStr(parseOrderDate(o.date)) === d);
+      const dayMenus = {};
+      dayOrders.forEach(o => parseItems(o.items).forEach(({name, qty}) => {
+        dayMenus[name] = (dayMenus[name]||0) + qty;
+      }));
+      const dd = new Date(d+'T00:00:00+07:00');
+      const dStr = dd.toLocaleDateString('th-TH', {day:'numeric', month:'short', year:'2-digit'});
+      const rows = Object.entries(dayMenus).sort((a,b)=>b[1]-a[1]).map(([name, qty]) =>
+        `<div class="rpt-menu-day-row"><span class="rpt-menu-day-name">${name}</span><span class="rpt-menu-day-qty">${qty} จาน</span></div>`
+      ).join('');
+      return `<div class="rpt-day-group">
+        <div class="rpt-day-header"><span>${dStr}</span><span style="color:var(--text2);font-weight:400">${dayOrders.length} ออเดอร์</span></div>
+        ${rows}
+      </div>`;
+    }).join('');
+  }
+
+  // ── รายละเอียดแต่ละออเดอร์ ──
+  const orderDetailEl = document.getElementById('rpt-order-detail-body');
+  if (filtered.length === 0) {
+    orderDetailEl.innerHTML = '<div class="report-empty">ไม่มีข้อมูลในช่วงนี้</div>';
+  } else {
+    const sortedOrders = [...filtered].sort((a,b) => {
+      const da = parseOrderDate(a.date), db = parseOrderDate(b.date);
+      return (db||0) - (da||0) || (b.time||'').localeCompare(a.time||'');
+    });
+    orderDetailEl.innerHTML = dayKeys.map(d => {
+      const dayOrders = sortedOrders.filter(o => toLocalDateStr(parseOrderDate(o.date)) === d);
+      const dd = new Date(d+'T00:00:00+07:00');
+      const dStr = dd.toLocaleDateString('th-TH', {day:'numeric', month:'short', year:'2-digit'});
+      const dayTotal = dayOrders.reduce((s,o) => s+(parseFloat(o.total)||0), 0);
+      const rows = dayOrders.map(o => {
+        const items = parseItems(o.items).map(({name,qty}) => `${name} ×${qty}`).join(', ');
+        return `<div class="rpt-order-row">
+          <span class="rpt-order-num">${o.orderNum}</span>
+          <span class="rpt-order-items">${items || o.items}</span>
+          <span class="rpt-order-total">฿${Number(o.total).toLocaleString()}</span>
+        </div>`;
+      }).join('');
+      return `<div class="rpt-day-group">
+        <div class="rpt-day-header"><span>${dStr}</span><span style="color:var(--green);font-weight:700">฿${dayTotal.toLocaleString()}</span></div>
+        ${rows}
+      </div>`;
+    }).join('');
+  }
 }
+
+// ════════════════════════════════════════
+//  MANUAL ORDER
+// ════════════════════════════════════════
+let moItems   = [];
+let moType    = 'รับหน้าร้าน';
+let moPay     = 'เงินสด';
+let voiceRec  = null;
+let voiceOn   = false;
+let voiceText = '';
+
+const THAI_NUMS = {หนึ่ง:1,สอง:2,สาม:3,สี่:4,ห้า:5,หก:6,เจ็ด:7,แปด:8,เก้า:9,สิบ:10};
+
+function openManualOrder() {
+  if (allMenus.length === 0) loadMenus();
+  moItems = []; moType = 'รับหน้าร้าน'; moPay = 'เงินสด';
+  voiceText = '';
+  document.getElementById('mo-customer').value = '';
+  document.getElementById('mo-note').value     = '';
+  document.getElementById('mo-address').value  = '';
+  document.getElementById('voice-transcript').textContent = '';
+  document.getElementById('voice-transcript').classList.remove('show');
+  document.getElementById('voice-parse-btn').style.display = 'none';
+  document.getElementById('voice-status').textContent = 'กดไมค์แล้วพูดรายการ';
+  document.getElementById('voice-mic-btn').classList.remove('listening');
+  document.getElementById('voice-mic-btn').textContent = '🎙️';
+  document.querySelectorAll('.type-toggle-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mo-type-pickup').classList.add('active');
+  document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.pay-btn').classList.add('active');
+  document.getElementById('mo-address-wrap').style.display = 'none';
+  renderMoItems();
+  document.getElementById('manual-order-sheet').classList.add('open');
+  document.getElementById('manual-overlay').classList.add('open');
+}
+
+function closeManualOrder() {
+  stopVoice();
+  document.getElementById('manual-order-sheet').classList.remove('open');
+  document.getElementById('manual-overlay').classList.remove('open');
+  closeMoPicker();
+}
+
+function setMoType(t) {
+  moType = t;
+  document.getElementById('mo-type-pickup').classList.toggle('active', t === 'รับหน้าร้าน');
+  document.getElementById('mo-type-deliver').classList.toggle('active', t === 'ส่ง');
+  document.getElementById('mo-address-wrap').style.display = t === 'ส่ง' ? 'block' : 'none';
+}
+
+function setMoPay(btn, p) {
+  moPay = p;
+  document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function renderMoItems() {
+  const total = moItems.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+  document.getElementById('mo-total').textContent = '฿' + total.toLocaleString();
+  const body = document.getElementById('mo-items-body');
+  if (!moItems.length) {
+    body.innerHTML = '<div class="edit-empty">ยังไม่มีรายการ</div>';
+    return;
+  }
+  body.innerHTML = moItems.map((item, idx) => {
+    if (item.isCustom) {
+      return `<div class="edit-item-row" style="flex-wrap:wrap;gap:6px;">
+        <div class="edit-item-info" style="width:100%;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="font-size:11px;color:#7c3aed;font-weight:700;">⭐ พิเศษ</span>
+            <input type="text" style="flex:1;border:1.5px solid #c4b5fd;border-radius:8px;padding:5px 10px;font-family:inherit;font-size:13px;font-weight:700;" placeholder="ชื่อรายการ..." value="${item.name.replace(/"/g,'&quot;')}" oninput="moItems[${idx}].name=this.value">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11px;color:var(--text2);">ราคา/จาน:</span>
+            <input type="number" min="0" style="width:90px;border:1px solid #c4b5fd;border-radius:6px;padding:4px 8px;font-family:inherit;font-size:13px;" placeholder="฿0" value="${item.unitPrice||''}" oninput="moItems[${idx}].unitPrice=parseFloat(this.value)||0;renderMoItems()">
+            <button class="qty-ctrl-btn" onclick="changeMoQty(${idx},-1)">−</button>
+            <span class="qty-ctrl-num">${item.qty}</span>
+            <button class="qty-ctrl-btn" onclick="changeMoQty(${idx},1)">+</button>
+            <button class="del-item-btn" onclick="removeMoItem(${idx})">🗑</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    return `<div class="edit-item-row">
+      <div class="edit-item-info">
+        <div class="edit-item-name">${item.name}${item.addon?` <span class="edit-addon-tag">(+${item.addon})</span>`:''}</div>
+        <div class="edit-item-price">${item.unitPrice>0?'฿'+item.unitPrice+' × '+item.qty+' = ฿'+(item.unitPrice*item.qty):'ไม่ทราบราคา'}</div>
+      </div>
+      <div class="edit-item-controls">
+        <button class="qty-ctrl-btn" onclick="changeMoQty(${idx},-1)">−</button>
+        <span class="qty-ctrl-num">${item.qty}</span>
+        <button class="qty-ctrl-btn" onclick="changeMoQty(${idx},1)">+</button>
+        <button class="del-item-btn" onclick="removeMoItem(${idx})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function changeMoQty(idx, d) { moItems[idx].qty = Math.max(1, moItems[idx].qty + d); renderMoItems(); }
+function removeMoItem(idx)    { moItems.splice(idx,1); renderMoItems(); }
+function addMoCustom()        { moItems.push({name:'',qty:1,addon:'',unitPrice:0,isCustom:true}); renderMoItems(); }
+
+// ── Menu Picker for Manual Order ──
+function openMoPicker() {
+  document.getElementById('mo-picker-search').value = '';
+  renderMoPickerList('');
+  document.getElementById('mo-picker').classList.add('open');
+}
+function closeMoPicker() { document.getElementById('mo-picker').classList.remove('open'); }
+function filterMoPicker(q) { renderMoPickerList(q.toLowerCase()); }
+function renderMoPickerList(q) {
+  const list = allMenus.filter(m => m.status !== 'หมด' && m.status !== 'ปิด' && (!q || m.name.toLowerCase().includes(q)));
+  document.getElementById('mo-picker-list').innerHTML = list.length
+    ? list.map(m => `<div class="picker-item" onclick="addMoMenuItem('${m.id}')">
+        <div><div class="picker-item-name">${m.name}</div><div class="picker-item-cat">${m.category||''}</div></div>
+        <div class="picker-item-price">฿${m.price}</div>
+      </div>`).join('')
+    : '<div class="edit-empty">ไม่พบเมนู</div>';
+}
+function addMoMenuItem(menuId) {
+  const m = allMenus.find(x => x.id === menuId);
+  if (!m) return;
+  const ex = moItems.find(i => i.name === m.name && !i.addon);
+  if (ex) ex.qty++;
+  else moItems.push({name:m.name, qty:1, addon:'', unitPrice:parseFloat(m.price)||0});
+  closeMoPicker();
+  renderMoItems();
+}
+
+// ── Voice Recognition ──
+function toggleVoice() { voiceOn ? stopVoice() : startVoice(); }
+
+function startVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('❌ เบราว์เซอร์นี้ไม่รองรับ Voice'); return; }
+  voiceRec = new SR();
+  voiceRec.lang = 'th-TH';
+  voiceRec.continuous = true;
+  voiceRec.interimResults = true;
+  voiceText = '';
+
+  const btn = document.getElementById('voice-mic-btn');
+  const statusEl = document.getElementById('voice-status');
+  const transcriptEl = document.getElementById('voice-transcript');
+  const parseBtn = document.getElementById('voice-parse-btn');
+
+  voiceRec.onstart = () => {
+    voiceOn = true;
+    btn.classList.add('listening');
+    btn.textContent = '⏹️';
+    statusEl.textContent = '🔴 กำลังฟัง... (กดหยุดเมื่อพูดเสร็จ)';
+    transcriptEl.classList.add('show');
+    parseBtn.style.display = 'none';
+  };
+
+  voiceRec.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    voiceText += final;
+    transcriptEl.textContent = voiceText + (interim ? ' ' + interim : '');
+  };
+
+  voiceRec.onerror = (e) => { stopVoice(); showToast('❌ Voice error: ' + e.error); };
+  voiceRec.onend   = () => { if (voiceOn) voiceRec.start(); }; // auto-restart
+
+  voiceRec.start();
+}
+
+function stopVoice() {
+  voiceOn = false;
+  if (voiceRec) { voiceRec.onend = null; voiceRec.stop(); voiceRec = null; }
+  const btn = document.getElementById('voice-mic-btn');
+  btn.classList.remove('listening');
+  btn.textContent = '🎙️';
+  document.getElementById('voice-status').textContent = 'หยุดแล้ว — กด "แปลงเป็นเมนู"';
+  if (voiceText.trim()) document.getElementById('voice-parse-btn').style.display = 'inline-block';
+}
+
+function parseVoiceTranscript() {
+  const text = document.getElementById('voice-transcript').textContent.trim();
+  if (!text) return;
+
+  // โหลดเมนูถ้ายังไม่มี
+  if (!allMenus.length) { showToast('⏳ กำลังโหลดเมนู...'); loadMenus().then(() => parseVoiceTranscript()); return; }
+
+  // เรียงเมนูจากชื่อยาว → สั้น เพื่อ match ชื่อยาวก่อน
+  const sorted = [...allMenus].sort((a,b) => b.name.length - a.name.length);
+  let remaining = text;
+  const matched = [];
+  const unmatched = [];
+
+  sorted.forEach(menu => {
+    const idx = remaining.indexOf(menu.name);
+    if (idx === -1) return;
+    // หาจำนวน: ตัวเลข หรือ คำไทย ที่ตามหลังชื่อ
+    const after = remaining.slice(idx + menu.name.length, idx + menu.name.length + 15);
+    let qty = 1;
+    const digitM = after.match(/^\s*(\d+)/);
+    if (digitM) { qty = parseInt(digitM[1]); }
+    else {
+      for (const [word, num] of Object.entries(THAI_NUMS)) {
+        if (after.startsWith(word)) { qty = num; break; }
+      }
+    }
+    // หา addon ในวงเล็บหรือหลังคำว่า "ใส่"/"ไม่ใส่"/"พิเศษ"
+    const addonM = after.match(/\(([^)]+)\)/) || after.match(/(?:ใส่|ไม่ใส่|พิเศษ)\s*([^\s,]+)/);
+    const addon = addonM ? addonM[1] : '';
+
+    matched.push({name:menu.name, qty, addon, unitPrice:parseFloat(menu.price)||0});
+    // ลบส่วนที่ match แล้วออก
+    remaining = remaining.slice(0,idx) + '▪'.repeat(menu.name.length) + remaining.slice(idx + menu.name.length);
+  });
+
+  // ส่วนที่เหลือ — ทำความสะอาดแล้วจัดกลุ่มเป็น segment ที่มีความหมาย
+  const NOISE = new Set(['ครับ','ค่ะ','นะ','จาน','อัน','ชิ้น','ที่','และ','กับ','แล้ว','ด้วย','หน่อย','เลย','มา']);
+  const leftover = remaining.replace(/▪+/g,' ').replace(/\s+/g,' ').trim()
+    .split(/[,\/\n]+/)
+    .map(s => s.trim())
+    .filter(s => {
+      const words = s.split(/\s+/).filter(w => w.length > 0 && !NOISE.has(w) && !/^\d+$/.test(w));
+      return words.length > 0 && s.replace(/\s/g,'').length > 1;
+    });
+
+  // เพิ่มเมนูที่ match ลงใน moItems
+  matched.forEach(item => {
+    const ex = moItems.find(i => i.name === item.name && i.addon === item.addon);
+    if (ex) ex.qty += item.qty;
+    else moItems.push(item);
+  });
+
+  // แสดงผล
+  const el = document.getElementById('voice-transcript');
+  let html = '';
+  if (matched.length) {
+    html += matched.map(i => `<span style="color:#86efac;">✅ ${i.name}${i.addon?` (+${i.addon})`:''} ×${i.qty}</span>`).join('<br>');
+  }
+  if (leftover.length) {
+    html += (matched.length ? '<br>' : '') +
+      '<span style="color:rgba(255,255,255,.7);font-size:11px;display:block;margin-top:6px;">ไม่พบในเมนู — กดเพิ่มเป็นรายการพิเศษ:</span>';
+    html += leftover.map((w,i) =>
+      `<span class="unmatched-tag" style="cursor:pointer;" onclick="addUnmatchedItem('${w.replace(/'/g,"\\'")}')">${w} ＋</span>`
+    ).join(' ');
+  }
+  if (!matched.length && !leftover.length) {
+    html = '⚠️ ไม่พบเมนูในรายการที่พูด';
+  }
+  el.innerHTML = html;
+
+  document.getElementById('voice-parse-btn').style.display = 'none';
+  document.getElementById('voice-status').textContent = matched.length
+    ? `✅ เพิ่ม ${matched.length} รายการแล้ว`
+    : leftover.length ? '👆 กด tag ด้านบนเพื่อเพิ่มเป็นรายการพิเศษ' : '⚠️ ลองพูดชื่อเมนูใหม่';
+  voiceText = '';
+  renderMoItems();
+
+  // ถ้าไม่มี leftover ให้ปิด transcript หลัง 3 วินาที
+  if (!leftover.length) {
+    setTimeout(() => {
+      document.getElementById('voice-status').textContent = 'กดไมค์เพื่อเพิ่มรายการต่อ';
+      el.classList.remove('show');
+      el.textContent = '';
+    }, 3000);
+  }
+}
+
+function addUnmatchedItem(name) {
+  moItems.push({name: name.trim(), qty:1, addon:'', unitPrice:0, isCustom:true});
+  renderMoItems();
+  // ลบ tag ที่กดออก
+  const tags = document.querySelectorAll('.unmatched-tag');
+  tags.forEach(t => { if (t.textContent.replace(' ＋','').trim() === name.trim()) t.remove(); });
+  showToast('➕ เพิ่ม "' + name.trim() + '" เป็นรายการพิเศษแล้ว — ใส่ราคาด้วยนะ');
+}
+
+// ── Save Manual Order ──
+async function saveManualOrder() {
+  const customer = document.getElementById('mo-customer').value.trim() || 'โทรศัพท์';
+  const note     = document.getElementById('mo-note').value.trim();
+  const address  = document.getElementById('mo-address').value.trim();
+
+  if (!moItems.length) { showToast('❌ กรุณาเพิ่มรายการอย่างน้อย 1 รายการ'); return; }
+
+  const itemsText = moItems.map(i => {
+    const addon = i.addon ? ` (+${i.addon})` : '';
+    const inMenu = allMenus.find(m => m.name === i.name);
+    if (i.isCustom && i.unitPrice > 0) return `${i.name} x${i.qty}${addon} [฿${i.unitPrice}]`;
+    if (!inMenu && i.unitPrice > 0)    return `${i.name} x${i.qty}${addon} [฿${i.unitPrice}]`;
+    return `${i.name} x${i.qty}${addon}`;
+  }).join(', ');
+
+  const total = moItems.reduce((s,i) => s + i.unitPrice * i.qty, 0);
+
+  showToast('⏳ กำลังบันทึก...');
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        action: 'addManualOrder',
+        customerName: customer,
+        type: moType,
+        payment: moPay,
+        items: itemsText,
+        total,
+        note,
+        address,
+        channel: 'โทรศัพท์'
+      }),
+      redirect:'follow'
+    });
+    const data = JSON.parse(await res.text());
+    if (data.status !== 'success') throw new Error(data.message || 'บันทึกไม่สำเร็จ');
+    closeManualOrder();
+    showToast('✅ สร้างออเดอร์ ' + (data.orderNum||'') + ' แล้ว');
+    loadOrders();
+  } catch(err) { showToast('❌ ' + err.message); }
+}
+
+// ════════════════════════════════════════
+//  EXPENSE
+// ════════════════════════════════════════
+function parseDateStr(raw) {
+  // "01/06/2026" → "2026-06-01"
+  const m = String(raw || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  return String(raw || '');
+}
+
+// ════════════════════════════════════════
+//  INCOME MODAL
+// ════════════════════════════════════════
+function openAddIncome() {
+  document.getElementById('inc-name').value = '';
+  document.getElementById('inc-amount').value = '';
+  document.getElementById('inc-note').value = '';
+  document.getElementById('income-modal').classList.add('open');
+}
+function closeIncomeModal(e) {
+  if (e && e.target !== document.getElementById('income-modal')) return;
+  document.getElementById('income-modal').classList.remove('open');
+}
+async function saveIncome() {
+  const cat    = document.getElementById('inc-cat').value;
+  const name   = document.getElementById('inc-name').value.trim();
+  const amount = parseFloat(document.getElementById('inc-amount').value);
+  const note   = document.getElementById('inc-note').value.trim();
+  if (!name || !amount) { showToast('❌ กรุณากรอกรายการและจำนวนเงิน'); return; }
+  showToast('⏳ กำลังบันทึก...');
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({ action:'addIncome', category:cat, name, amount, note }),
+      redirect:'follow'
+    });
+    const data = await res.json();
+    if (data.status !== 'success') throw new Error(data.message || 'บันทึกไม่สำเร็จ');
+    document.getElementById('income-modal').classList.remove('open');
+    showToast('✅ บันทึกรายรับแล้ว');
+    loadAccounting(_accRange, _accTab);
+  } catch(err) { showToast('❌ ' + err.message); }
+}
+
+// ════════════════════════════════════════
+//  MONTHLY SUMMARY
+// ════════════════════════════════════════
+function openMonthlySummary() {
+  const sel = document.getElementById('sum-month');
+  sel.innerHTML = '';
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0');
+    const thMonths = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    const buddhistY = y + 543;
+    const opt = document.createElement('option');
+    opt.value = `${y}-${m}`;
+    opt.textContent = `${thMonths[d.getMonth()+1]} ${buddhistY}`;
+    if (i === 0) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  document.getElementById('summary-content').innerHTML = '<div class="report-empty">กด "โหลด" เพื่อดูสรุป</div>';
+  document.getElementById('summary-modal').classList.add('open');
+}
+
+function closeSummaryModal(e) {
+  if (e && e.target !== document.getElementById('summary-modal')) return;
+  document.getElementById('summary-modal').classList.remove('open');
+}
+
+async function loadMonthlySummary() {
+  const ym = document.getElementById('sum-month').value;
+  const [y, m] = ym.split('-');
+  const fromD = `${y}-${m}-01`;
+  const lastDay = new Date(parseInt(y), parseInt(m), 0).getDate();
+  const toD = `${y}-${m}-${String(lastDay).padStart(2,'0')}`;
+  const el = document.getElementById('summary-content');
+  el.innerHTML = '<div class="report-empty">กำลังโหลด...</div>';
+  try {
+    const [ordersRes, expRes, incRes] = await Promise.all([
+      fetch(APPS_SCRIPT_URL + '?action=orders'),
+      fetch(APPS_SCRIPT_URL + '?action=expenses&from=' + fromD + '&to=' + toD),
+      fetch(APPS_SCRIPT_URL + '?action=incomes&from=' + fromD + '&to=' + toD),
+    ]);
+    const ordersData = await ordersRes.json();
+    const expData    = await expRes.json();
+    const incData    = await incRes.json();
+
+    const orders = (ordersData.orders || []).filter(o => {
+      const d = parseDateStr(String(o.date));
+      return d >= fromD && d <= toD;
+    });
+    const manualIncomes = incData.incomes || [];
+    const expenses      = expData.expenses || [];
+
+    const orderTotal   = orders.reduce((s,o) => s + (parseFloat(o.total)||0), 0);
+    const manualTotal  = manualIncomes.reduce((s,i) => s + (parseFloat(i.amount)||0), 0);
+    const totalIncome  = orderTotal + manualTotal;
+    const totalExp     = expenses.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+    const profit       = totalIncome - totalExp;
+
+    const manualBycat = {};
+    manualIncomes.forEach(i => { const c = i.category||'อื่นๆ'; manualBycat[c]=(manualBycat[c]||0)+(parseFloat(i.amount)||0); });
+    const expByCat = {};
+    expenses.forEach(e => { const c = e.category||'อื่นๆ'; expByCat[c]=(expByCat[c]||0)+(parseFloat(e.amount)||0); });
+
+    const thMonths2 = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    const monthLabel = thMonths2[parseInt(m)] + ' ' + (parseInt(y)+543);
+    const fmt = n => n.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+    const expRows = Object.entries(expByCat).map(([cat,amt]) =>
+      `<tr><td style="padding:5px 8px;color:var(--text2);">  ${cat}</td><td style="padding:5px 8px;text-align:right;color:var(--red);">${fmt(amt)}</td></tr>`
+    ).join('');
+    const manualRows = Object.entries(manualBycat).map(([cat,amt]) =>
+      `<tr><td style="padding:5px 8px;color:var(--text2);">  ${cat}</td><td style="padding:5px 8px;text-align:right;color:#16a34a;">${fmt(amt)}</td></tr>`
+    ).join('');
+
+    el.innerHTML = `
+      <div id="printable-summary" style="font-family:Arial,sans-serif;color:var(--text);">
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:15px;font-weight:800;">สรุปบัญชีรายรับ-รายจ่าย</div>
+          <div style="font-size:13px;color:var(--text2);">ร้านครัวพอใจตามสั่ง</div>
+          <div style="font-size:13px;color:var(--text2);">ประจำเดือน ${monthLabel}</div>
+        </div>
+        <div style="background:rgba(34,197,94,.08);border-radius:10px;padding:10px;margin-bottom:10px;">
+          <div style="font-weight:800;margin-bottom:6px;font-size:13px;">💚 รายรับ</div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <tr><td style="padding:5px 8px;color:var(--text2);">  รายรับจากออเดอร์ (${orders.length} ออเดอร์)</td><td style="padding:5px 8px;text-align:right;color:#16a34a;">${fmt(orderTotal)}</td></tr>
+            ${manualRows}
+            <tr style="border-top:1px solid rgba(34,197,94,.3);">
+              <td style="padding:8px 8px 4px;font-weight:800;">รวมรายรับ</td>
+              <td style="padding:8px 8px 4px;text-align:right;font-weight:800;color:#16a34a;">${fmt(totalIncome)}</td>
+            </tr>
+          </table>
+        </div>
+        <div style="background:rgba(239,68,68,.08);border-radius:10px;padding:10px;margin-bottom:10px;">
+          <div style="font-weight:800;margin-bottom:6px;font-size:13px;">❤️ รายจ่าย</div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            ${expRows||'<tr><td colspan="2" style="padding:5px 8px;color:var(--text2);text-align:center;">ไม่มีรายจ่าย</td></tr>'}
+            <tr style="border-top:1px solid rgba(239,68,68,.3);">
+              <td style="padding:8px 8px 4px;font-weight:800;">รวมรายจ่าย</td>
+              <td style="padding:8px 8px 4px;text-align:right;font-weight:800;color:var(--red);">${fmt(totalExp)}</td>
+            </tr>
+          </table>
+        </div>
+        <div style="background:${profit>=0?'rgba(34,197,94,.12)':'rgba(239,68,68,.12)'};border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">💛 กำไรสุทธิ</div>
+          <div style="font-size:22px;font-weight:900;color:${profit>=0?'#16a34a':'var(--red)'};">${profit>=0?'+':''}฿${fmt(profit)}</div>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:var(--text2);text-align:center;">
+          จัดทำโดยระบบครัวพอใจ • ${new Date().toLocaleDateString('th-TH')}
+        </div>
+      </div>`;
+  } catch(err) {
+    el.innerHTML = `<div class="report-empty" style="color:var(--red);">❌ ${err.message}</div>`;
+  }
+}
+
+function printSummary() {
+  const content = document.getElementById('printable-summary');
+  if (!content) { showToast('โหลดสรุปก่อนนะคะ'); return; }
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>สรุปบัญชีสิ้นเดือน - ครัวพอใจ</title>
+    <style>body{font-family:Arial,sans-serif;padding:24px;max-width:480px;margin:0 auto;color:#333;}
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    @media print{button{display:none!important;}}</style></head><body>
+    ${content.innerHTML}
+    <br><button onclick="window.print()" style="width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🖨️ พิมพ์</button>
+    </body></html>`);
+  win.document.close();
+}
+
+// ════════════════════════════════════════
+//  ACCOUNTING STATE & TABS
+// ════════════════════════════════════════
+let _accRange = 'today';
+let _accTab   = 'all';
+let _accIncomeItems = [];
+let _accExpItems    = [];
+
+function switchAccRange(range) {
+  _accRange = range;
+  document.querySelectorAll('.acc-range-btn').forEach(b => b.classList.remove('active-range'));
+  const btn = document.querySelector(`[onclick="switchAccRange('${range}')"]`);
+  if (btn) btn.classList.add('active-range');
+  loadAccounting(range, _accTab);
+}
+
+function switchAccTab(tab) {
+  _accTab = tab;
+  ['all','income','expense'].forEach(t => {
+    const b = document.getElementById('acc-tab-' + t);
+    if (b) { b.style.background = t===tab?'var(--blue)':'transparent'; b.style.color = t===tab?'#fff':'var(--text2)'; }
+  });
+  renderAccList(_accIncomeItems, _accExpItems);
+}
+
+async function loadAccounting(range, tab) {
+  _accRange = range || _accRange;
+  _accTab   = tab   || _accTab;
+  const el = document.getElementById('accounting-list');
+  if (el) el.innerHTML = '<div class="report-empty">กำลังโหลด...</div>';
+
+  const now = new Date();
+  const todayStr  = toLocalDateStr(now);
+  const mStr      = todayStr.slice(0,7);
+  const y = now.getFullYear(), mo = String(now.getMonth()+1).padStart(2,'0');
+  const monthFrom = `${y}-${mo}-01`;
+  let fromD, toD;
+  if (_accRange==='today')      { fromD=toD=todayStr; }
+  else if (_accRange==='week')  { const w=new Date(now);w.setDate(w.getDate()-6);fromD=toLocalDateStr(w);toD=todayStr; }
+  else                          { fromD=monthFrom;toD=todayStr; }
+
+  try {
+    const [ordersRes,expListRes,expMonthRes,incListRes,incMonthRes] = await Promise.all([
+      fetch(APPS_SCRIPT_URL+'?action=orders'),
+      fetch(APPS_SCRIPT_URL+'?action=expenses&from='+fromD+'&to='+toD),
+      fetch(APPS_SCRIPT_URL+'?action=expenses&from='+monthFrom+'&to='+todayStr),
+      fetch(APPS_SCRIPT_URL+'?action=incomes&from='+fromD+'&to='+toD),
+      fetch(APPS_SCRIPT_URL+'?action=incomes&from='+monthFrom+'&to='+todayStr),
+    ]);
+    const ordersData  =await ordersRes.json();
+    const expListData =await expListRes.json();
+    const expMonthData=await expMonthRes.json();
+    const incListData =await incListRes.json();
+    const incMonthData=await incMonthRes.json();
+
+    const allOrders = ordersData.orders || [];
+    const inRange = d => { const s=parseDateStr(String(d)); return s>=fromD&&s<=toD; };
+    const inMonth = d => { const s=parseDateStr(String(d)); return s>=monthFrom&&s<=todayStr; };
+    const incomeList  = allOrders.filter(o=>inRange(o.date));
+    const incomeMonth = allOrders.filter(o=>inMonth(o.date));
+    const expList     = expListData.expenses   || [];
+    const expMonth    = expMonthData.expenses  || [];
+    const manualIncList  = incListData.incomes  || [];
+    const manualIncMonth = incMonthData.incomes || [];
+
+    const orderToday = allOrders.filter(o=>parseDateStr(String(o.date))===todayStr).reduce((s,o)=>s+(parseFloat(o.total)||0),0);
+    const manualIncToday = (incMonthData.incomes||[]).filter(i=>parseDateStr(String(i.date))===todayStr).reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
+    const incomeToday = orderToday+manualIncToday;
+    const expToday = (expMonthData.expenses||[]).filter(e=>parseDateStr(String(e.date))===todayStr).reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+    const incomeMonthSum = incomeMonth.reduce((s,o)=>s+(parseFloat(o.total)||0),0)+manualIncMonth.reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
+    const expMonthSum    = expMonth.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+    const profitToday = incomeToday-expToday;
+    const profitMonth = incomeMonthSum-expMonthSum;
+
+    const setEl = (id,v,color) => { const e=document.getElementById(id); if(e){e.textContent=v;if(color)e.style.color=color;} };
+    setEl('acc-income-today','฿'+incomeToday.toLocaleString());
+    setEl('acc-exp-today',   '฿'+expToday.toLocaleString());
+    setEl('acc-profit-today',(profitToday>=0?'+':'')+'฿'+profitToday.toLocaleString(), profitToday>=0?'#22c55e':'var(--red)');
+    setEl('acc-income-month','฿'+incomeMonthSum.toLocaleString());
+    setEl('acc-exp-month',   '฿'+expMonthSum.toLocaleString());
+    setEl('acc-profit-month',(profitMonth>=0?'+':'')+'฿'+profitMonth.toLocaleString(), profitMonth>=0?'#22c55e':'var(--red)');
+
+    _accIncomeItems = [
+      ...incomeList.map(o=>({type:'income',label:o.items||'ออเดอร์',sub:(o.customerName||'')+(o.customerName?' • ':'')+( o.date||''),amount:parseFloat(o.total)||0,note:o.note||''})),
+      ...manualIncList.map(i=>({type:'income',label:'💚 '+(i.name||'-'),sub:(i.category||'')+(i.category?' • ':'')+( i.date||''),amount:parseFloat(i.amount)||0,note:i.note||''})),
+    ];
+    _accExpItems = expList.map(e=>({type:'expense',label:e.name||'-',sub:(e.category||'')+(e.category?' • ':'')+( e.date||''),amount:parseFloat(e.amount)||0,note:e.note||'',receiptUrl:e.receiptUrl||''}));
+
+    renderAccList(_accIncomeItems,_accExpItems);
+  } catch(err) {
+    if(el) el.innerHTML=`<div class="report-empty" style="color:var(--red);">❌ ${err.message}</div>`;
+  }
+}
+
+function renderAccList(incomeItems, expItems) {
+  const el = document.getElementById('accounting-list');
+  if (!el) return;
+  let items = _accTab==='income' ? incomeItems : _accTab==='expense' ? expItems : [...incomeItems,...expItems];
+  if (!items.length) { el.innerHTML='<div class="report-empty">ไม่มีรายการในช่วงนี้</div>'; return; }
+  el.innerHTML = items.map(item=>`
+    <div style="background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.07);display:flex;align-items:center;gap:12px;">
+      <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;background:${item.type==='income'?'rgba(34,197,94,.15)':'rgba(239,68,68,.12)'}">
+        ${item.type==='income'?'💚':'❤️'}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.label}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;">${item.sub}</div>
+        ${item.note?`<div style="font-size:12px;color:var(--gray);margin-top:2px;">📝 ${item.note}</div>`:''}
+        ${item.receiptUrl?`<a href="${item.receiptUrl}" target="_blank" style="font-size:12px;color:var(--blue);margin-top:2px;display:inline-block;">📎 ดูใบเสร็จ</a>`:''}
+      </div>
+      <div style="font-size:15px;font-weight:800;color:${item.type==='income'?'#22c55e':'var(--red)'};white-space:nowrap;">
+        ${item.type==='income'?'+':'-'}฿${item.amount.toLocaleString()}
+      </div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════
+//  EXPENSE FUNCTIONS
+// ════════════════════════════════════════
+let _receiptBase64 = null;
+let _receiptMime   = null;
+
+function openAddExpense() {
+  document.getElementById('exp-name').value   = '';
+  document.getElementById('exp-amount').value = '';
+  document.getElementById('exp-note').value   = '';
+  clearReceipt();
+  document.getElementById('expense-modal').classList.add('open');
+}
+
+function closeExpenseModal(e) {
+  if (e && e.target !== document.getElementById('expense-modal')) return;
+  document.getElementById('expense-modal').classList.remove('open');
+}
+
+function previewReceipt(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const dataUrl = ev.target.result;
+    _receiptMime   = file.type || 'image/jpeg';
+    _receiptBase64 = dataUrl.split(',')[1];
+    document.getElementById('exp-receipt-img').src = dataUrl;
+    document.getElementById('exp-receipt-preview').style.display = 'block';
+    document.getElementById('exp-receipt-label').textContent = '✅ ' + file.name;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearReceipt() {
+  _receiptBase64 = null; _receiptMime = null;
+  const inp = document.getElementById('exp-receipt');
+  if (inp) inp.value = '';
+  const prev = document.getElementById('exp-receipt-preview');
+  if (prev) prev.style.display = 'none';
+  const lbl = document.getElementById('exp-receipt-label');
+  if (lbl) lbl.textContent = 'ถ่ายรูป / เลือกไฟล์';
+}
+
+async function saveExpense() {
+  const cat    = document.getElementById('exp-cat').value;
+  const name   = document.getElementById('exp-name').value.trim();
+  const amount = parseFloat(document.getElementById('exp-amount').value);
+  const note   = document.getElementById('exp-note').value.trim();
+  if (!name || !amount) { showToast('❌ กรุณากรอกรายการและจำนวนเงิน'); return; }
+  const btn = document.getElementById('exp-save-btn');
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+  try {
+    let receiptUrl = '';
+    if (_receiptBase64) {
+      showToast('📤 กำลังอัพโหลดใบเสร็จ...');
+      const upRes = await fetch(APPS_SCRIPT_URL, {
+        method:'POST', headers:{'Content-Type':'text/plain'},
+        body: JSON.stringify({action:'uploadReceipt', imageBase64:_receiptBase64, mimeType:_receiptMime, filename:'receipt_'+Date.now()+'.jpg'}),
+        redirect:'follow'
+      });
+      const upData = await upRes.json();
+      if (upData.status==='success') receiptUrl = upData.url||'';
+    }
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({action:'addExpense', category:cat, name, amount, note, receiptUrl}),
+      redirect:'follow'
+    });
+    const data = await res.json();
+    if (data.status!=='success') throw new Error(data.message||'บันทึกไม่สำเร็จ');
+    document.getElementById('expense-modal').classList.remove('open');
+    showToast('✅ บันทึกรายจ่ายแล้ว'+(receiptUrl?' 📎':''));
+    loadAccounting(_accRange, _accTab);
+  } catch(err) { showToast('❌ '+err.message); }
+  finally { btn.disabled=false; btn.textContent='💾 บันทึก'; }
+}
+
+async function loadExpenses(range) {
+  loadAccounting(range||_accRange, _accTab);
+}
+
 </script>
 </body>
 </html>

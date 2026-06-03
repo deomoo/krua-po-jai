@@ -9,7 +9,7 @@ const CONFIG = {
   // LINE Messaging API (ใช้แทน LINE Notify ที่ปิดตัวแล้ว มี.ค. 2568)
   LINE_CHANNEL_ACCESS_TOKEN: 'YzlvR2hhPmXiT9QaWV9jx8xs+2j5VuMsuOq98sO1cDhIL/BtPlf6DsCw79nMh3+ePVeR0GU90+7PB/2XR5xe0xFWpXkeJmdtmJgNf/DuQSj5ham5xqA1kdgEwcfwOl1vldwWdnTKiwqZWhDO6MTE3AdB04t89/1O/w1cDnyilFU=',
   LINE_OWNER_USER_ID:        'Uccc1b5db6798aa769a8c4158a410b1f8',
-  LINE_ADMIN_IDS:            ['Uccc1b5db6798aa769a8c4158a410b1f8'],  // เพิ่ม User ID แอดมินได้ที่นี่
+  LINE_ADMIN_IDS:            ['Uccc1b5db6798aa769a8c4158a410b1f8', 'U90ab2da186f1ce82e4688bd6ebef8845'],  // เพิ่ม User ID แอดมินได้ที่นี่
   LINE_GROUP_ID:             'C224b763190c944f8b89f55ddc49bf566',
   GEMINI_API_KEY:            'AIzaSyAKStG9zR_z-g106Di53aVhf1Ra5TPjsgc',
   TIMEZONE:                'Asia/Bangkok',
@@ -61,6 +61,10 @@ function doPost(e) {
     else if (action === 'updateMenu')        result = updateMenu(data);
     else if (action === 'deleteMenu')        result = deleteMenu(data);
     else if (action === 'toggleIngredient')  result = toggleIngredient(data);
+    else if (action === 'addExpense')        result = addExpenseFromAdmin(data);
+    else if (action === 'deleteExpense')     result = deleteExpense(data);
+    else if (action === 'addManualOrder')    result = addManualOrder(data);
+    else if (action === 'addIncome')         result = addIncome(data);
     else result = { status: 'error', message: 'Unknown action: ' + action };
 
     return jsonResponse(result);
@@ -79,6 +83,8 @@ function doGet(e) {
     if (action === 'orders')      return jsonResponse(getOrders());
     if (action === 'adminMenu')   return jsonResponse(getAdminMenu());
     if (action === 'ingredients') return jsonResponse(getIngredients());
+    if (action === 'expenses')    return jsonResponse(getExpenses(e.parameter));
+    if (action === 'incomes')     return jsonResponse(getIncomes(e.parameter));
     return jsonResponse({ status: 'ok', message: 'ครัวพอใจ API ready' });
   } catch (err) {
     return jsonResponse({ status: 'error', message: err.toString() });
@@ -102,9 +108,17 @@ function submitOrder(data) {
     ['เลขออเดอร์','วันที่','เวลา','ช่องทาง','ประเภท','ยอดรวม',
      'รายการเมนู','Add-ons','โน้ต','ที่อยู่','ชื่อลูกค้า','สถานะ','ประเภทบิล','LINE User ID']);
 
-  // สร้างเลขออเดอร์
-  const lastRow  = Math.max(orderSheet.getLastRow(), 1);
-  const orderNum = '#' + String(lastRow).padStart(3, '0');
+  // สร้างเลขออเดอร์ (reset ทุกวัน)
+  const now0     = new Date();
+  const todayStr0 = Utilities.formatDate(now0, CONFIG.TIMEZONE, 'dd/MM/yyyy');
+  const allRows0  = orderSheet.getLastRow() > 1
+    ? orderSheet.getRange(2, 1, orderSheet.getLastRow() - 1, 2).getValues()
+    : [];
+  const todayCount = allRows0.filter(r => {
+    try { return Utilities.formatDate(new Date(r[1]), CONFIG.TIMEZONE, 'dd/MM/yyyy') === todayStr0; }
+    catch(e) { return String(r[1]) === todayStr0; }
+  }).length;
+  const orderNum = '#' + String(todayCount + 1).padStart(3, '0');
 
   const now      = new Date();
   const dateStr  = Utilities.formatDate(now, CONFIG.TIMEZONE, 'dd/MM/yyyy');
@@ -120,7 +134,7 @@ function submitOrder(data) {
   const customList    = (data.customItems || []).filter(c => c.name && c.name.trim());
   const customSummary = customList.map(c => `${c.name.trim()} x1 [?]`).join(', ');
   const fullSummary   = [itemsSummary, customSummary].filter(Boolean).join(', ');
-  const hasCustom     = customList.length > 0;
+  const hasCustom     = true; // แอดมินยืนยันราคาทุกออเดอร์
 
   const total = regularItems.reduce((s, i) => s + i.price * i.qty, 0);
 
@@ -149,12 +163,76 @@ function submitOrder(data) {
   // แจ้งเตือนเจ้าของร้าน
   sendOwnerNotify(orderNum, data, fullSummary, total, timeStr, hasCustom);
 
-  // แจ้งลูกค้าว่าออเดอร์เข้าระบบแล้ว (ข้ามถ้า AI bot จัดการเองอยู่แล้ว)
-  if (data.userId && !data.skipConfirm) {
-    sendOrderConfirm(data.userId, orderNum, fullSummary, total, data, hasCustom);
-  }
+  // ไม่ส่งข้อความยืนยันให้ลูกค้าตอนรับออเดอร์ — ส่งเฉพาะตอนเสร็จ/ส่งเท่านั้น
 
   return { status: 'success', orderNum: orderNum, total: total, hasCustom: hasCustom };
+}
+
+
+// ════════════════════════════════════════════════════════════════
+//  1b. ADD MANUAL ORDER (สร้างออเดอร์จากแอดมิน — โทรศัพท์/หน้าร้าน)
+// ════════════════════════════════════════════════════════════════
+
+function addManualOrder(data) {
+  const ss         = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const orderSheet = getOrCreateSheet(ss, 'ออเดอร์',
+    ['เลขออเดอร์','วันที่','เวลา','ช่องทาง','ประเภท','ยอดรวม',
+     'รายการเมนู','Add-ons','โน้ต','ที่อยู่','ชื่อลูกค้า','สถานะ','ประเภทบิล','LINE User ID']);
+
+  // สร้างเลขออเดอร์ (reset ทุกวัน)
+  const now       = new Date();
+  const todayStr  = Utilities.formatDate(now, CONFIG.TIMEZONE, 'dd/MM/yyyy');
+  const allRows   = orderSheet.getLastRow() > 1
+    ? orderSheet.getRange(2, 1, orderSheet.getLastRow() - 1, 2).getValues()
+    : [];
+  const todayCount = allRows.filter(r => {
+    try { return Utilities.formatDate(new Date(r[1]), CONFIG.TIMEZONE, 'dd/MM/yyyy') === todayStr; }
+    catch(e) { return String(r[1]) === todayStr; }
+  }).length;
+  const orderNum = '#' + String(todayCount + 1).padStart(3, '0');
+
+  const dateStr = Utilities.formatDate(now, CONFIG.TIMEZONE, 'dd/MM/yyyy');
+  const timeStr = Utilities.formatDate(now, CONFIG.TIMEZONE, 'HH:mm');
+
+  // แปลง type
+  const typeLabel = (data.type === 'delivery') ? 'ส่ง'
+    : (data.type === 'dine-in') ? 'ทานที่ร้าน' : 'รับหน้าร้าน';
+
+  // แปลง payment
+  const payLabel = (data.payment === 'transfer') ? '💳 เงินโอน'
+    : (data.payment === 'installment') ? '🔄 คนละครึ่ง'
+    : (data.payment === 'other') ? '🧾 อื่นๆ' : '💵 เงินสด';
+
+  orderSheet.appendRow([
+    orderNum,
+    dateStr,
+    timeStr,
+    data.channel || 'โทรศัพท์',
+    typeLabel,
+    data.total || 0,
+    data.items || '',
+    '',                            // Add-ons (รวมอยู่ใน items string แล้ว)
+    data.note || '',
+    data.address || '',
+    data.customerName || 'ลูกค้า',
+    'รอทำ',
+    payLabel,
+    '',                            // LINE User ID (ไม่มีสำหรับออเดอร์โทรศัพท์)
+  ]);
+
+  // แจ้งเตือนเจ้าของร้าน
+  try {
+    const fakeData = {
+      customerName: data.customerName || 'ลูกค้า',
+      deliveryType: data.type,
+      note: data.note || '',
+      address: data.address || '',
+      paymentMethod: data.payment,
+    };
+    sendOwnerNotify(orderNum, fakeData, data.items || '', data.total || 0, timeStr, false);
+  } catch(e) { logError('addManualOrder.notify', e); }
+
+  return { status: 'success', orderNum: orderNum, total: data.total || 0 };
 }
 
 
@@ -288,6 +366,7 @@ function sendOwnerNotify(orderNum, data, itemsSummary, total, timeStr, hasCustom
   const userId = CONFIG.LINE_OWNER_USER_ID;
   if (!token  || token.startsWith('วาง'))  return;
   if (!userId || userId.startsWith('วาง')) return;
+  const adminIds = CONFIG.LINE_ADMIN_IDS || [userId];
 
   const typeEmoji   = data.deliveryType === 'deliver' ? '🛵 ส่งถึงบ้าน' : '🏪 รับหน้าร้าน';
   const payEmoji    = data.paymentMethod === 'transfer' ? '📲 เงินโอน' : '💵 เงินสด';
@@ -311,8 +390,8 @@ function sendOwnerNotify(orderNum, data, itemsSummary, total, timeStr, hasCustom
   if (groupId && !groupId.startsWith('วาง') && groupId !== '') {
     linePush(groupId, msgText);
   } else {
-    // fallback ส่งหา User ID เจ้าของ
-    linePush(userId, msgText);
+    // ส่งหาแอดมินทุกคน
+    adminIds.forEach(id => { if (id) linePush(id, msgText); });
   }
 }
 
@@ -326,34 +405,28 @@ function sendOrderConfirm(lineUserId, orderNum, itemsSummary, total, data, hasCu
   const payText    = data.paymentMethod === 'transfer' ? '📲 ชำระด้วยเงินโอน' : '💵 ชำระด้วยเงินสด';
   const addrLine   = data.address ? `\n📍 ${data.address}` : '';
   const noteLine   = data.note    ? `\n📝 ${data.note}` : '';
-  const totalLine  = hasCustom
-    ? `💰 ยอดบางส่วน ฿${total}\n⭐ มีรายการพิเศษ ทางร้านจะแจ้งยอดรวมจริงหลังยืนยัน`
-    : `💰 ยอดรวม ฿${total}\n${payText}`;
-
   const msgText =
 `🛒 รับออเดอร์แล้ว! ${orderNum}
 ${typeText}${addrLine}
 
 🍽 ${itemsSummary}${noteLine}
 
-${totalLine}
-──────────────────
-⏳ รอร้านยืนยันออเดอร์สักครู่นะครับ`;
+⏳ รอร้านยืนยันออเดอร์และแจ้งราคาสักครู่นะครับ 🙏`;
 
   linePush(lineUserId, msgText);
 }
 
 
-// ── แจ้งลูกค้าหลังแอดมินระบุราคารายการพิเศษแล้ว ──
+// ── แจ้งลูกค้าหลังแอดมินยืนยันออเดอร์แล้ว ──
 function sendCustomPriceNotify(lineUserId, orderNum, itemsSummary, total) {
   const msgText =
 `✅ ร้านยืนยันออเดอร์แล้ว! ${orderNum}
 
 🍽 ${itemsSummary}
 
-💰 ยอดรวมทั้งหมด ฿${total}
+💰 ยอดรวม ฿${total}
 ──────────────────
-⏳ รอทางร้านเตรียมอาหารสักครู่นะครับ`;
+กำลังเตรียมอาหาร รอสักครู่นะครับ 🙏`;
   linePush(lineUserId, msgText);
 }
 
@@ -474,9 +547,7 @@ function updateOrderItems(data) {
       sheet.getRange(i + 1, 7).setValue(data.items  || '');
       sheet.getRange(i + 1, 8).setValue(data.addons || '');
       // ส่ง LINE แจ้งยอดลูกค้า (กรณีมีรายการพิเศษและแอดมินกำหนดราคาแล้ว)
-      if (data.sendNotify && data.lineUserId) {
-        sendCustomPriceNotify(data.lineUserId, data.orderNum, data.items, Number(data.total));
-      }
+      // ไม่ส่ง sendCustomPriceNotify — แจ้งลูกค้าเฉพาะตอนเสร็จ/ส่งเท่านั้น
       return { status: 'success' };
     }
   }
@@ -504,7 +575,7 @@ function updateOrderStatus(data) {
     const lineUserId  = rows[i][13] || '';
     const orderType   = String(rows[i][4] || '');   // E: ส่ง / รับหน้าร้าน
     if (lineUserId) {
-      sendCustomerNotify(lineUserId, data.orderNum, data.status, String(rows[i][6]), orderType);
+      sendCustomerNotify(lineUserId, data.orderNum, data.status, String(rows[i][6]), orderType, Number(rows[i][5]) || 0);
     }
     return { status: 'success', message: 'อัปเดตสถานะเรียบร้อย' };
   }
@@ -516,58 +587,45 @@ function updateOrderStatus(data) {
 //  8. SEND CUSTOMER NOTIFY — แจ้งลูกค้าเมื่อสถานะเปลี่ยน
 // ════════════════════════════════════════════════════════════════
 
-function sendCustomerNotify(lineUserId, orderNum, status, items, orderType) {
+function sendCustomerNotify(lineUserId, orderNum, status, items, orderType, total) {
+  // ส่งแจ้งลูกค้าเฉพาะตอนเสร็จ / ส่ง / ยกเลิก เท่านั้น (ประหยัดโควต้า LINE)
+  if (!['ส่งแล้ว','ยกเลิก'].includes(status)) return;
+
   const shopName  = CONFIG.SHOP_NAME;
   const isDeliver = orderType === 'ส่ง';
+  const totalLine = total ? `\n💰 ยอดรวม ฿${total}` : '';
 
   const msgs = {
-    'รับออเดอร์':
-`✅ ร้านรับออเดอร์แล้ว!
-📋 ${orderNum}
-
-🍽 ${items}
-
-👨‍🍳 กำลังเตรียมอาหารให้คุณนะครับ
-ขอบคุณที่อุดหนุน ${shopName} 🙏`,
-
-    'กำลังทำ':
-`👨‍🍳 กำลังทำอาหารแล้ว!
-📋 ${orderNum}
-
-🍽 ${items}
-
-⏳ อีกสักครู่อาหารจะพร้อมนะครับ`,
-
     'เสร็จแล้ว': isDeliver
       ?
-`🎉 อาหารพร้อมแล้ว!
-📋 ${orderNum}
+`🎉 อาหารพร้อมแล้ว! ${orderNum}
 
 🍽 ${items}
+${totalLine}
 
-🛵 กำลังจัดส่ง`
+🛵 กำลังจัดส่งให้คุณนะครับ
+ขอบคุณที่อุดหนุน ${shopName} 🙏`
       :
-`🎉 อาหารพร้อมแล้ว!
-📋 ${orderNum}
+`🎉 อาหารพร้อมแล้ว! ${orderNum}
 
 🍽 ${items}
+${totalLine}
 
-🏃 มารับได้เลยค่ะ`,
+🏃 มารับได้เลยครับ
+ขอบคุณที่อุดหนุน ${shopName} 🙏`,
 
     'ส่งแล้ว':
-`🛵 อาหารออกเดินทางแล้ว!
-📋 ${orderNum}
+`✅ ส่งอาหารแล้ว! ${orderNum}
 
 🍽 ${items}
+${totalLine}
 
-🏠 กำลังส่งถึงคุณเลยครับ รอสักครู่นะ`,
+🙏 ขอบคุณที่อุดหนุน ${shopName} นะครับ`,
 
     'ยกเลิก':
-`❌ ออเดอร์ถูกยกเลิก
-📋 ${orderNum}
+`❌ ออเดอร์ถูกยกเลิก ${orderNum}
 
-😔 ขออภัยในความไม่สะดวกครับ
-📞 หากมีข้อสงสัยทักแชทหาร้านได้เลย`,
+😔 ขออภัยในความไม่สะดวกครับ`,
   };
 
   const msgText = msgs[status] || `📋 ${orderNum} — อัปเดตสถานะ: ${status}`;
@@ -884,6 +942,28 @@ function handleLineMessage(ev) {
       lineReply(replyToken, `${action}${found.name}แล้วครับ ✅`);
       return;
     }
+    // ── บันทึกรายจ่าย (แอดมินพิมพ์ "จ่าย ..." หรือ "รายจ่าย ...") ──
+    if (/^(จ่าย|รายจ่าย|ค่าใช้จ่าย)\s+/i.test(text) || /^\d/.test(text) && isAdmin) {
+      if (/^(จ่าย|รายจ่าย|ค่าใช้จ่าย)\s+/i.test(text)) {
+        try {
+          const expenses = parseExpenseWithGemini(text);
+          if (expenses && expenses.length > 0) {
+            const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+            expenses.forEach(exp => addExpenseRow(ss, exp));
+            const summary = expenses.map(e => `• ${e.category}: ${e.name} ฿${e.amount}`).join('\n');
+            const total   = expenses.reduce((s, e) => s + (e.amount || 0), 0);
+            lineReply(replyToken, `✅ บันทึกรายจ่ายแล้ว!\n\n${summary}\n\n💸 รวม ฿${total}`);
+          } else {
+            lineReply(replyToken, '❓ ไม่เข้าใจรายจ่าย ลองพิมพ์เช่น\n"จ่าย หมูกรอบ 200 น้ำมัน 80"');
+          }
+        } catch(err) {
+          logError('expense', err.toString());
+          lineReply(replyToken, '❌ บันทึกไม่สำเร็จ: ' + err.toString());
+        }
+        return;
+      }
+    }
+
     // ── แอดมินสั่งออเดอร์แทนลูกค้า ──
     const adminOrder = parseAdminOrderWithGemini(text);
     if (adminOrder && adminOrder.isOrder) {
@@ -976,18 +1056,11 @@ function handleLineMessage(ev) {
         address:       parsed.address      || '',
         paymentMethod: 'cash',
         customerName:  custName,
-        userId:        userId
+        userId:        userId,
+        skipConfirm:   true  // bot ตอบด้วย lineReply แล้ว ไม่ต้องส่ง push ซ้อน
       });
       if (result.status === 'success') {
-        const hasCustom = parsed.customItems && parsed.customItems.length > 0;
-        let msg = '✅ รับออเดอร์ ' + result.orderNum + ' แล้วครับ!\n\n';
-        msg += formatOrderSummary(parsed.items, parsed.customItems);
-        if (parsed.address) msg += '\n📍 ' + parsed.address;
-        msg += hasCustom
-          ? '\n\n⭐ มีรายการพิเศษ ทางร้านจะแจ้งยอดรวมภายหลังครับ'
-          : '\n💰 ยอดรวม ฿' + result.total;
-        msg += '\n\n⏳ รอทางร้านยืนยันสักครู่นะครับ 🙏';
-        lineReply(replyToken, msg);
+        // ไม่ส่งข้อความยืนยันให้ลูกค้าทันที — ร้านจะแจ้งตอนอาหารพร้อม/ส่งเท่านั้น (ประหยัดโควต้า LINE)
       } else {
         lineReply(replyToken, '❌ เกิดข้อผิดพลาด กรุณาลองใหม่หรือติดต่อร้านโดยตรงครับ');
       }
@@ -1076,7 +1149,7 @@ function parseOrderWithGemini(text) {
 - ถ้าไม่มีวัตถุดิบในลิสต์เลย → ingredientQueries: []
 - ถ้าชื่อใกล้เคียงเมนูในร้าน ให้ map ชื่อเมนูจริง + ราคาจริง
 - "พิเศษ" = ขนาดใหญ่ ใส่ใน addon
-- "ไข่ดาว" "ไข่เจียว" "ไข่ข้น" = addon (สะกด "ไข่ข้น" ตรงตามชื่อใน Add-ons เสมอ)
+- "ไข่ดาว" "ไข่เจียว" "ไข่ข้น" = addon (สะกด "ไข่ข้น" ตรงตามชื่อใน Add-ons เสมอ) ถ้ามีหลาย addon ให้คั่นด้วย ", " เช่น "ไข่ข้น, พิเศษ"
 - ของที่ไม่มีในเมนู → customItems
 - "ส่ง..." หรือ "จัดส่ง" → deliveryType: "delivery", ดึงที่อยู่ใส่ address
 - "รับเอง" "รับที่ร้าน" → deliveryType: "pickup"
@@ -1178,10 +1251,9 @@ function formatOrderSummary(items, customItems) {
     const addon = i.addon ? ' (+' + i.addon + ')' : '';
     const sub   = (i.price || 0) * (i.qty || 1);
     total += sub;
-    lines.push('• ' + i.name + addon + ' x' + i.qty + ' = ฿' + sub);
+    lines.push('• ' + i.name + addon + ' x' + i.qty);
   });
-  (customItems || []).forEach(i => lines.push('⭐ ' + i.name + ' x' + i.qty + ' (แจ้งราคาภายหลัง)'));
-  if (total > 0 && !(customItems && customItems.length)) lines.push('\n💰 รวม ฿' + total);
+  (customItems || []).forEach(i => lines.push('⭐ ' + i.name + ' x' + i.qty));
   return lines.join('\n');
 }
 
@@ -1196,7 +1268,7 @@ function submitOrderFromAI(data) {
     addon: i.addon || ''
   }));
   // บวกราคา Add-ons จากตาราง ตั้งค่า (ไม่ใช้แค่ base price จาก Gemini)
-  const items = rawItems.map(i=>{try{const m={};const sh=ss.getSheets().find(s=>s.getName().includes('ตั้งค่า'));if(sh&&sh.getLastRow()>=15)sh.getRange(15,2,sh.getLastRow()-14,4).getValues().forEach(r=>{if(r[1]&&String(r[3]).trim()==='เปิด')m[String(r[1]).trim()]=parseFloat(r[2])||0;});const extra=String(i.addon||'').split(/[,\s]+/).reduce((s,n)=>s+(m[n.trim()]||0),0);return Object.assign({},i,{price:(i.price||0)+extra});}catch(e){return i;}});
+  const items = rawItems.map(i=>{try{const m={};const sh=ss.getSheets().find(s=>s.getName().includes('ตั้งค่า'));if(sh&&sh.getLastRow()>=15)sh.getRange(15,2,sh.getLastRow()-14,4).getValues().forEach(r=>{if(r[1]&&String(r[3]).trim()==='เปิด')m[String(r[1]).trim()]=parseFloat(r[2])||0;});const extra=String(i.addon||'').split(/[,\s+]+/).reduce((s,n)=>s+(m[n.trim()]||0),0);return Object.assign({},i,{price:(i.price||0)+extra});}catch(e){return i;}});
 
   return submitOrder({
     action:        'submitOrder',
@@ -1213,26 +1285,30 @@ function submitOrderFromAI(data) {
   });
 }
 
-// ── LINE Reply (ใช้ replyToken แทน push — ฟรี ไม่จำกัด) ──
-function lineReply(replyToken, message) {
-  const token = CONFIG.LINE_CHANNEL_ACCESS_TOKEN;
-  if (!token || token.startsWith('วาง')) return;
-  try {
-    UrlFetchApp.fetch('https://api.line.me/v2/bot/message/reply', {
-      method: 'POST', muteHttpExceptions: true,
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      payload: JSON.stringify({ replyToken, messages: [{ type: 'text', text: message }] })
-    });
-  } catch(err) { logError('lineReply', err); }
+// ════════════════════════════════════════════════════════════════
+//  EXPENSE — ระบบรายจ่าย
+// ════════════════════════════════════════════════════════════════
+
+const EXPENSE_CATS = ['วัตถุดิบ','แก๊ส/เชื้อเพลิง','บรรจุภัณฑ์','ค่าจ้าง','ค่าเช่า','อื่นๆ'];
+
+function getExpenseSheet(ss) {
+  return getOrCreateSheet(ss, 'รายจ่าย',
+    ['วันที่','เวลา','หมวดหมู่','รายการ','จำนวนเงิน (฿)','หมายเหตุ','บันทึกโดย']);
 }
 
-// ── ดึงชื่อลูกค้าจาก LINE Profile ──
-function lineGetProfile(userId) {
-  try {
-    const res = UrlFetchApp.fetch('https://api.line.me/v2/bot/profile/' + userId, {
-      headers: { 'Authorization': 'Bearer ' + CONFIG.LINE_CHANNEL_ACCESS_TOKEN },
-      muteHttpExceptions: true
-    });
-    return JSON.parse(res.getContentText());
-  } catch(e) { return null; }
+function addExpenseRow(ss, exp) {
+  const sheet   = getExpenseSheet(ss);
+  const now     = new Date();
+  const dateStr = Utilities.formatDate(now, CONFIG.TIMEZONE, 'dd/MM/yyyy');
+  const timeStr = Utilities.formatDate(now, CONFIG.TIMEZONE, 'HH:mm');
+  sheet.appendRow([dateStr, timeStr, exp.category || 'อื่นๆ', exp.name || '', Number(exp.amount) || 0, exp.note || '', exp.by || 'แอดมิน']);
 }
+
+function addExpenseFromAdmin(data) {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  addExpenseRow(ss, data);
+  return { status: 'success' };
+}
+
+function deleteExpense(data) {
+  c
