@@ -565,15 +565,25 @@ function updateOrderStatus(data) {
   if (!sheet) return { status: 'error', message: 'ไม่พบ Sheet ออเดอร์' };
 
   const rows = sheet.getDataRange().getValues();
+
+  // ใช้ rowIndex ตรงๆ เพราะเลขออเดอร์ซ้ำกันข้ามวันได้
+  if (data.rowIndex && parseInt(data.rowIndex) > 1) {
+    const ri = parseInt(data.rowIndex);
+    if (ri <= rows.length && String(rows[ri - 1][0]) === String(data.orderNum)) {
+      sheet.getRange(ri, 12).setValue(data.status);
+      const lineUserId = rows[ri - 1][13] || '';
+      const orderType  = String(rows[ri - 1][4] || '');
+      if (lineUserId) sendCustomerNotify(lineUserId, data.orderNum, data.status, String(rows[ri - 1][6]), orderType, Number(rows[ri - 1][5]) || 0);
+      return { status: 'success', message: 'อัปเดตสถานะเรียบร้อย' };
+    }
+  }
+
+  // fallback: ค้นหาจากเลขออเดอร์ (กรณีไม่มี rowIndex)
   for (let i = 1; i < rows.length; i++) {
     if (rows[i][0] !== data.orderNum) continue;
-
-    // อัปเดตสถานะ คอลัมน์ L (1-based = 12)
     sheet.getRange(i + 1, 12).setValue(data.status);
-
-    // แจ้งลูกค้าผ่าน LINE ถ้ามี userId
     const lineUserId  = rows[i][13] || '';
-    const orderType   = String(rows[i][4] || '');   // E: ส่ง / รับหน้าร้าน
+    const orderType   = String(rows[i][4] || '');
     if (lineUserId) {
       sendCustomerNotify(lineUserId, data.orderNum, data.status, String(rows[i][6]), orderType, Number(rows[i][5]) || 0);
     }
@@ -1311,4 +1321,82 @@ function addExpenseFromAdmin(data) {
 }
 
 function deleteExpense(data) {
-  c
+  const ss    = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const sheet = getExpenseSheet(ss);
+  const rows  = sheet.getDataRange().getValues();
+  for (let i = rows.length - 1; i >= 1; i--) {
+    if (String(rows[i][0]) === String(data.date) && String(rows[i][3]) === String(data.name) && String(rows[i][4]) === String(data.amount)) {
+      sheet.deleteRow(i + 1);
+      return { status: 'success' };
+    }
+  }
+  return { status: 'error', message: 'ไม่พบรายการ' };
+}
+
+function getExpenses(params) {
+  const ss    = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const sheet = getExpenseSheet(ss);
+  if (sheet.getLastRow() < 2) return { status: 'success', expenses: [] };
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues();
+  let expenses = rows.map(r => ({
+    date: String(r[0]), time: String(r[1]), category: String(r[2]),
+    name: String(r[3]), amount: Number(r[4]) || 0, note: String(r[5]), by: String(r[6])
+  })).filter(e => e.name);
+  // filter by date range
+  if (params && params.from) {
+    expenses = expenses.filter(e => {
+      try {
+        const m = e.date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (!m) return false;
+        const d = new Date(`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}T12:00:00+07:00`);
+        const from = new Date(params.from + 'T00:00:00+07:00');
+        const to   = new Date((params.to || params.from) + 'T23:59:59+07:00');
+        return d >= from && d <= to;
+      } catch(e) { return true; }
+    });
+  }
+  return { status: 'success', expenses, categories: EXPENSE_CATS };
+}
+
+// ── Gemini parse รายจ่าย ──
+function parseExpenseWithGemini(text) {
+  const prompt =
+`แยกรายจ่ายจากข้อความนี้: "${text}"
+
+หมวดหมู่ที่มี: วัตถุดิบ, แก๊ส/เชื้อเพลิง, บรรจุภัณฑ์, ค่าจ้าง, ค่าเช่า, อื่นๆ
+
+ตอบเป็น JSON array เท่านั้น:
+[{"name":"ชื่อรายการ","amount":จำนวนเงิน,"category":"หมวดหมู่"}]
+
+ถ้ามีหลายรายการให้แยกแต่ละรายการ เช่น "หมูกรอบ 200 น้ำมัน 80" → 2 รายการ`;
+
+  const resp = callGemini(prompt);
+  try {
+    const m = resp.match(/\[[\s\S]*\]/);
+    return m ? JSON.parse(m[0]) : null;
+  } catch(e) { return null; }
+}
+
+// ── LINE Reply (ใช้ replyToken แทน push — ฟรี ไม่จำกัด) ──
+function lineReply(replyToken, message) {
+  const token = CONFIG.LINE_CHANNEL_ACCESS_TOKEN;
+  if (!token || token.startsWith('วาง')) return;
+  try {
+    UrlFetchApp.fetch('https://api.line.me/v2/bot/message/reply', {
+      method: 'POST', muteHttpExceptions: true,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      payload: JSON.stringify({ replyToken, messages: [{ type: 'text', text: message }] })
+    });
+  } catch(err) { logError('lineReply', err); }
+}
+
+// ── ดึงชื่อลูกค้าจาก LINE Profile ──
+function lineGetProfile(userId) {
+  try {
+    const res = UrlFetchApp.fetch('https://api.line.me/v2/bot/profile/' + userId, {
+      headers: { 'Authorization': 'Bearer ' + CONFIG.LINE_CHANNEL_ACCESS_TOKEN },
+      muteHttpExceptions: true
+    });
+    return JSON.parse(res.getContentText());
+  } catch(e) { return null; }
+}
